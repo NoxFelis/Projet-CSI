@@ -1,10 +1,18 @@
 import obja
 import numpy as np
-import sys
+import os
+from os import getcwd
 
-def main():
+DATA_DIR = getcwd()
+
+def main(args=None):
 	# 1 - On récupère l'objet dans son maillage irrégulier 
-	
+	if args is None:
+		args = DATA_DIR + "/example/suzanne.obj"
+	else :
+		args = DATA_DIR + "/" + args
+	# partie faite par Yang
+	# model de type obja.Model
 
 	# 2 - On crée le maillage de base 
 	# pour l'instant cette étape n'est pas gérée, on doit le faire à la main
@@ -12,6 +20,7 @@ def main():
 
 	# 3 - On partitionne le maillage d'origine
 	# sur le maillage de base (patchs)
+	# partie faite par Jade
 
 	# 4 - On projète les patchs sur le maillage de base
 
@@ -19,6 +28,7 @@ def main():
 
 	# on retourne le maillage semi-régulier
 
+	print(args)
 	return 1
 
 if __name__ == '__main__':
