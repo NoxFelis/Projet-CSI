@@ -5,13 +5,36 @@ from os import getcwd
 
 DATA_DIR = getcwd()
 
-def patch = patcher(input_mesh,base_mesh)
+def patcher(input_mesh,base_mesh):
 	return patch
 
-def correspondance = projection(input_mesh, base_mesh, patch)
+def projection(input_mesh, base_mesh, patch):
+	# une fois qu'on à la répartition pour les patchs on peut projeter les points sur les faces du base mesh
+	# ATTENTION : les coordonnées ici seront toutes relatives à la face sur laquelle elles sont projetées
+	correspondance = dict()
+	# pour chaque face du base_mesh
+	for face in patch.keys(): # face = indice de la face sur le base_mesh
+		# pour chaque face du input_mesh à projeter sur le base_mesh
+		for face_input in patch[face]: # face_input : indice de la face sur l'input mesh
+			[ida,idb,idc] = base_mesh.face[face] # on récupère les indices de sommets de la face
+
+			# on va à partir de ces 3 sommets, créer deux vecteur x1 et x2
+			# ATTENTION, ces vecteurs sont désormais notre base tq:
+			# x1 = a-c, x2 = b-c et base(c,x1,x2)
+			x1 = np.substract(base_mesh.vertices[ida],base_mesh.vertices[idc])
+			x2 = np.substract(base_mesh.vertices[idb],base_mesh.vertices[idc])
+
+			for idp in input_mesh.face[face_input]: # pour chaque point de la face dans le input_mesh
+				# on projette le point sur la face dur base_mesh
+				p = input_mesh.vertices[idp]
+				x = np.dot(p,x1)
+				y = np.dot(p,x2)
+				p_prim = np.array(x,y,0)
+				correspondance[idp] = p_prim
+
 	return correspondance
 
-def final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance)
+def subdivision(input_mesh, base_mesh,patch, correspondance):
 	# initialisation : liste L avec toutes les faces du mesh
 	# on commence déjà par créer le modèle sur lequel on va travailler, qui est une copie du base_mesh
 	final_mesh = Output()
@@ -20,12 +43,29 @@ def final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance)
 	L = dict();
 
 	# on va tout copier
-	for i in len(base_mesh.faces):
-		final_mesh.add_face(i,clone(base_mesh.faces[i]))
+	for i in len(base_mesh.faces): # pour chaque face du base mesh
+		# face : Face
+		face = base_mesh.faces[i]
+
+		# on ajoute les sommets au final_mesh
+		# rappel : une face est l'association de 3 indices des sommets le formant
+		[ida,idb,idc] = [face.a,face.b,face.c]
+
+		# on ajoute dans final_mesh les sommets (attention il faut les copier)
+		final_mesh.add_vertex(ida,base_mesh.vertices[ida])
+		final_mesh.add_vertex(idb,base_mesh.vertices[idb])
+		final_mesh.add_vertex(idc,base_mesh.vertices[idc])
+
+		#maintenant on peut ajouter la face dans final_mesh
+		final_mesh.add_face(i,face.clone())	# vu que normalement c'est les mêmes indices
+		
+		# on peut aussi ajouter les indices des faces directement dans la liste L
 		L.append(i)
+		
 	
 	indice = len(L)
 	# on calcul aussi la longueur de la diagonale de la bounding_box du input_mesh
+	# TODO
 	bound_box = 1
 	Seuil = 1
 
@@ -34,15 +74,18 @@ def final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance)
 	while len(L) > 0:
 		# pour chaque face restante
 		E = dict()
-		for index_face in final_mesh.face_mapping.keys()
+		for index_face in final_mesh.face_mapping.keys():
 			# on calcul l'erreur E(f)
+			# TODO
 			E[index_face] = erreur()/bound_box
 			if E[index_face] < Seuil :
 				del L[index_face]
 				continue
 			
+			# TODO
 			# on divise chaque face f en 4 triangles
 			[a,b,c] = barycentres()
+		# TODO
 
 	return final_mesh
 
@@ -65,10 +108,10 @@ def main(args=None):
 	# 3 - On partitionne le maillage d'origine
 	# sur le maillage de base (patchs)
 	# partie faite par Jade
-	patch = patcher(input_mesh,base_mesh) # patch : dict(face,list(vertices))
+	patch = patcher(input_mesh,base_mesh) # patch : dict(face,list(faces))
 
 	# 4 - On projète les patchs sur le maillage de base
-	correspondance = projection(input_mesh, base_mesh, patch) # correspondance: dict(vertex 3D, vertex2D)
+	correspondance = projection(input_mesh, base_mesh, patch) # correspondance: dict(id vertex 3D, vertex2D)
 	
 	# 5 - On travaille la subdivision
 	final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance) # final_mesh : Output
