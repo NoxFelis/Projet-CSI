@@ -2,13 +2,14 @@ import obja
 import numpy as np
 import os
 from os import getcwd
+import csi_code
 
 DATA_DIR = getcwd()
 
 def patcher(input_mesh,base_mesh):
 	return patch
 
-def projection(input_mesh, base_mesh, patch):
+""" def projection(input_mesh, base_mesh, patch):
 	# une fois qu'on à la répartition pour les patchs on peut projeter les points sur les faces du base mesh
 	# ATTENTION : les coordonnées ici seront toutes relatives à la face sur laquelle elles sont projetées
 	correspondance = dict()
@@ -32,20 +33,26 @@ def projection(input_mesh, base_mesh, patch):
 				p_prim = np.array(x,y,0)
 				correspondance[idp] = p_prim
 
-	return correspondance
+	return correspondance """
 
+# travaille la subdivision jusqu'à obtenir un mesh semi_régulier
+# input_mesh : 	Model :		le mesh d'origine (coordonées des sommets dans repère monde)
+# base_mesh : 	Model : 	le base_mesh (coordonnées des sommets dans repère monde)
+# patch :		dict(int,list(int))	:		associe l'indice d'une face du base_mesh aux indices de faces du input_mesh qui sont incluses 
+# correspondance : 	dict(int,[int,4]) : 	associe l'indice d'un sommet du input_mesh aux coordoonées RELATIVES (base: (s3:s1,s2))
+#									 		de sa projection dans la bonne face et la DISTANCE entre ces points
 def subdivision(input_mesh, base_mesh,patch, correspondance):
 	# initialisation : liste L avec toutes les faces du mesh
 	# on commence déjà par créer le modèle sur lequel on va travailler, qui est une copie du base_mesh
 	final_mesh = Output()
 	
 	# on va aussi initialiser la liste sur laquelle on va travailler qui va avoir les indices correspondant aux faces
+	# en fait ce sera un dictionnaire avec en clé l'indice de face du final_mesh, et en clé l'indice de la face du base_mesh auquel elle appartient
 	L = dict();
 
 	# on va tout copier
 	for i in len(base_mesh.faces): # pour chaque face du base mesh
-		# face : Face
-		face = base_mesh.faces[i]
+		face = base_mesh.faces[i]	# face : Face
 
 		# on ajoute les sommets au final_mesh
 		# rappel : une face est l'association de 3 indices des sommets le formant
@@ -57,10 +64,10 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 		final_mesh.add_vertex(idc,base_mesh.vertices[idc])
 
 		#maintenant on peut ajouter la face dans final_mesh
-		final_mesh.add_face(i,face.clone())	# vu que normalement c'est les mêmes indices
+		final_mesh.add_face(i,face)	# vu que normalement c'est les mêmes indices
 		
 		# on peut aussi ajouter les indices des faces directement dans la liste L
-		L.append(i)
+		L[i] = i
 		
 	
 	indice = len(L)
@@ -72,19 +79,31 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 	# une fois l'initialisation faite nous pouvons procéder à la subdivision à proprement parler
 	# on va boucler sur les étapes suivantes tant qu'il reste une face à traiter
 	while len(L) > 0:
-		# pour chaque face restante
+		
 		E = dict()
-		for index_face in final_mesh.face_mapping.keys():
+		for index_face_final in L.keys():	# pour chaque face (du final_mesh) restante 
+			
 			# on calcul l'erreur E(f)
 			# TODO
-			E[index_face] = erreur()/bound_box
-			if E[index_face] < Seuil :
-				del L[index_face]
+			E[index_face_final] = erreur()/bound_box
+			# si cette erreur est inférieure à un seuil, on considère la face suffisamment proche du input_mesh
+			if E[index_face_final] < Seuil :	
+				del L[index_face_final]
 				continue
 			
 			# TODO
-			# on divise chaque face f en 4 triangles
-			[a,b,c] = barycentres()
+			# on travail avec les coordonnées 2D relatives
+			# on divise chaque face f en 4 triangles 
+			# rappel; base(s3:s1,s2)
+			[s1,s2,s3] = 
+			a = [0.5,0,0]	#barycentre s3 s1
+			b = [0,0.5,0]	#barycentre s3 s2
+			c = [0.5,0.5,0]	# barycentre s1 s2
+
+			#pour chacune de ces bases on cherche
+
+			 
+
 		# TODO
 
 	return final_mesh
