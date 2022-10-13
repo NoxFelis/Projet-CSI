@@ -9,6 +9,15 @@ DATA_DIR = getcwd()
 def patcher(input_mesh,base_mesh):
 	return patch
 
+# renvoie la face du input mesh auquel appartient le sommet
+# sommet : array(3) : coordonnées relatives dans la face du base_mesh d'un point
+# patch_i : list(int) :	liste des faces du input_mesh qui sont projetées dans la face du base mesh que l'on utilise	
+def recherche_face(sommet,patch_i,correspondance):
+	coord_barycentre_sommet = [-1,-1,-1]
+	for face in patch_i:	# pour chaque face du input 
+		C = makeBarycentricCoordsMatrix (sommet, face)
+	return coord_barycentre_sommet
+
 """ def projection(input_mesh, base_mesh, patch):
 	# une fois qu'on à la répartition pour les patchs on peut projeter les points sur les faces du base mesh
 	# ATTENTION : les coordonnées ici seront toutes relatives à la face sur laquelle elles sont projetées
@@ -45,7 +54,8 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 	# initialisation : liste L avec toutes les faces du mesh
 	# on commence déjà par créer le modèle sur lequel on va travailler, qui est une copie du base_mesh
 	final_mesh = Output()
-	
+	inter_mesh = Output() #le inter_mesh représente le final mesh, mais strictement dans les repères relatifs du base_mesh
+
 	# on va aussi initialiser la liste sur laquelle on va travailler qui va avoir les indices correspondant aux faces
 	# en fait ce sera un dictionnaire avec en clé l'indice de face du final_mesh, et en clé l'indice de la face du base_mesh auquel elle appartient
 	L = dict();
@@ -63,9 +73,14 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 		final_mesh.add_vertex(idb,base_mesh.vertices[idb])
 		final_mesh.add_vertex(idc,base_mesh.vertices[idc])
 
+		inter_mesh.add_vertex(ida,[1,0,0])
+		inter_mesh.add_vertex(idb,[0,1,0])
+		inter_mesh.add_vertex(idc,[0,0,0])
+
 		#maintenant on peut ajouter la face dans final_mesh
 		final_mesh.add_face(i,face)	# vu que normalement c'est les mêmes indices
-		
+		inter_mesh.add_face(i,face)
+
 		# on peut aussi ajouter les indices des faces directement dans la liste L
 		L[i] = i
 		
@@ -86,6 +101,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 			# on calcul l'erreur E(f)
 			# TODO
 			E[index_face_final] = erreur()/bound_box
+			
 			# si cette erreur est inférieure à un seuil, on considère la face suffisamment proche du input_mesh
 			if E[index_face_final] < Seuil :	
 				del L[index_face_final]
@@ -95,13 +111,15 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 			# on travail avec les coordonnées 2D relatives
 			# on divise chaque face f en 4 triangles 
 			# rappel; base(s3:s1,s2)
-			[s1,s2,s3] = 
-			a = [0.5,0,0]	#barycentre s3 s1
-			b = [0,0.5,0]	#barycentre s3 s2
-			c = [0.5,0.5,0]	# barycentre s1 s2
+			[s1,s2,s3] = inter_mesh.face_mapping[index_face_final]
+			a = np.sum(0.5*s3,0.5*s1)	#barycentre s3 s1
+			b = np.sum(0.5*s3,0.5*s2)	#barycentre s3 s2
+			c = np.sum(0.5*s1,0.5*s2)	# barycentre s1 s2
 
-			#pour chacune de ces bases on cherche
-
+			#pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
+			coord_barycentre_a = recherche_face(a,patch[L[index_face_final]],correspondance)
+			coord_barycentre_b = recherche_face(b,patch,correspondance,L[index_face_final])
+			coord_barycentre_c = recherche_face(c,patch,correspondance,L[index_face_final])
 			 
 
 		# TODO
