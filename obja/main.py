@@ -14,12 +14,15 @@ def patcher(input_mesh,base_mesh):
 # patch_i : list(int) :	liste des faces du input_mesh qui sont projetées dans la face du base mesh que l'on utilise	
 # correspondance: dict(int, [int:4]) : 	associe a l'id d'un point du input_mesh, les coordoonées relatives 2D du 
 # 										base_mesh ET la distance entre ces 2 points
-# poids : [int:3] : 
-def recherche_face(sommet,patch_i):
+# poids : [int:3] : poids de calcul pour le barycentre
+# face : int : id de la face dans le input_mesh (projeté) auquel appartient le point
+def recherche_face(sommet,patch_i,correspondance):
 	poids = [None,None,None]
 	face = -1
-	for f in patch_i:	# pour chaque face du input 
-		C = cc.makeBarycentricCoordsMatrix(sommet, f) 
+	for f in patch_i:	# pour chaque face du input
+		#on a la face avec les points projetés
+		projected_f = obja.Face(correspondance[f.a][0:2],correspondance[f.b][0:2],correspondance[f.c][0:2])
+		C = cc.makeBarycentricCoordsMatrix(sommet, projected_f) 
 		r = C.dot(sommet) # r représente les poids barycentriques
 		if r[0] >= 0 and r[1]>=0 and r[2]>=0:
 			face = f
@@ -122,7 +125,6 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 				del L[index_face_final]
 				continue
 			
-			# TODO
 			# on travail avec les coordonnées 2D relatives
 			# on divise chaque face f en 4 triangles 
 			# rappel; base(s3:s1,s2)
@@ -132,27 +134,49 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 			c = np.sum(0.5*s1,0.5*s2)	# barycentre s1 s2
 
 			#pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
-			(poids_a,fa) = recherche_face(a,patch[L[index_face_final]])
-			(poids_b,fb) = recherche_face(b,patch[L[index_face_final]])
-			(poids_c,fc) = recherche_face(c,patch[L[index_face_final]])
+			(poids_a,fa) = recherche_face(a,patch[L[index_face_final]],correspondance)
+			(poids_b,fb) = recherche_face(b,patch[L[index_face_final]],correspondance)
+			(poids_c,fc) = recherche_face(c,patch[L[index_face_final]],correspondance)
 			# on a donc les coordonnées dans le plan relatif à la face du base_mesh 
 
 			#il faut donc mtn stocker ces valeurs dans le final_mesh
-			#on commence par retirer la face entière (pas les vertex)
-			del final_mesh.face_mapping[index_face_final]
-
-			#ensuite on crée les 3 nouveaux vertex dans le final_mesh
-			[id1,id2,id3] = [indice_v+1,indice_v+2,indice_v+3]
-			final_mesh.add_vertex(id1,np.sum(np.sum(poids_a[0]*input_mesh.vertices[fa.a],poids_a[1]*input_mesh.vertices[fa.b]),poids_a[2]*input_mesh.vertices[fa.c]))
-			final_mesh.add_vertex(id2,np.sum(np.sum(poids_b[0]*input_mesh.vertices[fb.a],poids_b[1]*input_mesh.vertices[fb.b]),poids_b[2]*input_mesh.vertices[fb.c]))
-			final_mesh.add_vertex(id3,np.sum(np.sum(poids_c[0]*input_mesh.vertices[fc.a],poids_c[1]*input_mesh.vertices[fc.b]),poids_c[2]*input_mesh.vertices[fc.c]))
+			#on commence on crée les 3 nouveaux vertex dans le final_mesh
+			[idv1,idv2,idv3] = [indice_v+1,indice_v+2,indice_v+3]
+			final_mesh.add_vertex(idv1,np.sum(np.sum(poids_a[0]*input_mesh.vertices[fa.a],poids_a[1]*input_mesh.vertices[fa.b]),poids_a[2]*input_mesh.vertices[fa.c]))
+			final_mesh.add_vertex(idv2,np.sum(np.sum(poids_b[0]*input_mesh.vertices[fb.a],poids_b[1]*input_mesh.vertices[fb.b]),poids_b[2]*input_mesh.vertices[fb.c]))
+			final_mesh.add_vertex(idv3,np.sum(np.sum(poids_c[0]*input_mesh.vertices[fc.a],poids_c[1]*input_mesh.vertices[fc.b]),poids_c[2]*input_mesh.vertices[fc.c]))
 			indice_v += 3
 
 			#on peut donc mtn créer les 4 nouvelles faces du final_mesh
-			indice_f+=1
-			final_mesh.add_face(indice_f,[-])
+			[idf1,idf2,idf3,idf4] = [indice_f+1,indice_f+2,indice_f+3,indice_f+4]
+			final_mesh.add_face(idf1,[s1,idv3,idv1])
+			final_mesh.add_face(idf2,[idv3,s2,idv2])
+			final_mesh.add_face(idf3,[idv3,idv2,idv1])
+			final_mesh.add_face(idf4,[idv1,idv2,s3])
+			indice_f+=4
 
-		# TODO
+			#finalement on retire la face sur laquelle on vient de travailler
+			face_base = L[index_face_final]
+			del final_mesh.face_mapping[index_face_final]
+			
+
+			#avec les mêmes indices on va le faire pour le intermesh
+			del inter_mesh.face_mapping[index_face_final]
+			inter_mesh.add_vertex(idv1,a)
+			inter_mesh.add_vertex(idv2,b)
+			inter_mesh.add_vertex(idv3,c)
+
+			inter_mesh.add_face(idf1,[s1,idv3,idv1])
+			inter_mesh.add_face(idf2,[idv3,s2,idv2])
+			inter_mesh.add_face(idf3,[idv3,idv2,idv1])
+			inter_mesh.add_face(idf4,[idv1,idv2,s3])
+
+			del L[index_face_final]
+			#pour ajouter les 4 nouvelles
+			L[idf1] = face_base
+			L[idf2] = face_base
+			L[idf3] = face_base
+			L[idf4] = face_base
 
 	return final_mesh
 
@@ -164,8 +188,7 @@ def main(args=None):
 		path = DATA_DIR + "/" + args
 	# partie faite par Yang
 	# model de type obja.Model
-	input_mesh = parse_file(path)	# input_mesh : model
-
+	input_mesh = obja.parse_file(path)	# input_mesh : model
 
 	# 2 - On crée le maillage de base 
 	# pour l'instant cette étape n'est pas gérée, on doit le faire à la main
@@ -178,13 +201,12 @@ def main(args=None):
 	patch = patcher(input_mesh,base_mesh) # patch : dict(face,list(faces))
 
 	# 4 - On projète les patchs sur le maillage de base
-	correspondance = projection(input_mesh, base_mesh, patch) # correspondance: dict(id vertex 3D, vertex2D)
+	correspondance = cc.projection(input_mesh, base_mesh, patch) # correspondance: dict(id vertex 3D, vertex2D)
 	
 	# 5 - On travaille la subdivision
 	final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance) # final_mesh : Output
 
 	# on retourne le maillage semi-régulier
-
 	print(args)
 	return final_mesh
 
