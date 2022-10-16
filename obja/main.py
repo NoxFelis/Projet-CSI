@@ -2,21 +2,35 @@ import obja
 import numpy as np
 import os
 from os import getcwd
-import csi_code
+import csi_code as cc
 
 DATA_DIR = getcwd()
 
 def patcher(input_mesh,base_mesh):
 	return patch
 
-# renvoie la face du input mesh auquel appartient le sommet
+# renvoie la face du input mesh auquel appartient le sommet et les poids barycentriques
 # sommet : array(3) : coordonnées relatives dans la face du base_mesh d'un point
 # patch_i : list(int) :	liste des faces du input_mesh qui sont projetées dans la face du base mesh que l'on utilise	
-def recherche_face(sommet,patch_i,correspondance):
-	coord_barycentre_sommet = [-1,-1,-1]
-	for face in patch_i:	# pour chaque face du input 
-		C = makeBarycentricCoordsMatrix (sommet, face)
-	return coord_barycentre_sommet
+# correspondance: dict(int, [int:4]) : 	associe a l'id d'un point du input_mesh, les coordoonées relatives 2D du 
+# 										base_mesh ET la distance entre ces 2 points
+# poids : [int:3] : 
+def recherche_face(sommet,patch_i):
+	poids = [None,None,None]
+	face = -1
+	for f in patch_i:	# pour chaque face du input 
+		C = cc.makeBarycentricCoordsMatrix(sommet, f) 
+		r = C.dot(sommet) # r représente les poids barycentriques
+		if r[0] >= 0 and r[1]>=0 and r[2]>=0:
+			face = f
+			poids = r
+			break
+	return poids,face
+
+# TODO add arguments
+def erreur():
+	#TODO
+	return -1
 
 """ def projection(input_mesh, base_mesh, patch):
 	# une fois qu'on à la répartition pour les patchs on peut projeter les points sur les faces du base mesh
@@ -53,8 +67,8 @@ def recherche_face(sommet,patch_i,correspondance):
 def subdivision(input_mesh, base_mesh,patch, correspondance):
 	# initialisation : liste L avec toutes les faces du mesh
 	# on commence déjà par créer le modèle sur lequel on va travailler, qui est une copie du base_mesh
-	final_mesh = Output()
-	inter_mesh = Output() #le inter_mesh représente le final mesh, mais strictement dans les repères relatifs du base_mesh
+	final_mesh = obja.Output()
+	inter_mesh = obja.Output() #le inter_mesh représente le final mesh, mais strictement dans les repères relatifs du base_mesh
 
 	# on va aussi initialiser la liste sur laquelle on va travailler qui va avoir les indices correspondant aux faces
 	# en fait ce sera un dictionnaire avec en clé l'indice de face du final_mesh, et en clé l'indice de la face du base_mesh auquel elle appartient
@@ -85,7 +99,8 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 		L[i] = i
 		
 	
-	indice = len(L)
+	indice_f = len(L)
+	indice_v = 3*(indice_f+1)
 	# on calcul aussi la longueur de la diagonale de la bounding_box du input_mesh
 	# TODO
 	bound_box = 1
@@ -117,10 +132,25 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 			c = np.sum(0.5*s1,0.5*s2)	# barycentre s1 s2
 
 			#pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
-			coord_barycentre_a = recherche_face(a,patch[L[index_face_final]],correspondance)
-			coord_barycentre_b = recherche_face(b,patch,correspondance,L[index_face_final])
-			coord_barycentre_c = recherche_face(c,patch,correspondance,L[index_face_final])
-			 
+			(poids_a,fa) = recherche_face(a,patch[L[index_face_final]])
+			(poids_b,fb) = recherche_face(b,patch[L[index_face_final]])
+			(poids_c,fc) = recherche_face(c,patch[L[index_face_final]])
+			# on a donc les coordonnées dans le plan relatif à la face du base_mesh 
+
+			#il faut donc mtn stocker ces valeurs dans le final_mesh
+			#on commence par retirer la face entière (pas les vertex)
+			del final_mesh.face_mapping[index_face_final]
+
+			#ensuite on crée les 3 nouveaux vertex dans le final_mesh
+			[id1,id2,id3] = [indice_v+1,indice_v+2,indice_v+3]
+			final_mesh.add_vertex(id1,np.sum(np.sum(poids_a[0]*input_mesh.vertices[fa.a],poids_a[1]*input_mesh.vertices[fa.b]),poids_a[2]*input_mesh.vertices[fa.c]))
+			final_mesh.add_vertex(id2,np.sum(np.sum(poids_b[0]*input_mesh.vertices[fb.a],poids_b[1]*input_mesh.vertices[fb.b]),poids_b[2]*input_mesh.vertices[fb.c]))
+			final_mesh.add_vertex(id3,np.sum(np.sum(poids_c[0]*input_mesh.vertices[fc.a],poids_c[1]*input_mesh.vertices[fc.b]),poids_c[2]*input_mesh.vertices[fc.c]))
+			indice_v += 3
+
+			#on peut donc mtn créer les 4 nouvelles faces du final_mesh
+			indice_f+=1
+			final_mesh.add_face(indice_f,[-])
 
 		# TODO
 
