@@ -29,6 +29,42 @@ class Face:
         face.visible = True
         return face
 
+    def to_list(self) :
+        return [self.a,self.b,self.c]
+
+    def isIn(self,v) :
+        f = self.to_list()
+        return v in f
+
+    def orientation(self,v1,v2,o) :
+        f = self.to_list()            
+        i1 = f.index(v1)
+        i2 = f.index(v2)
+        
+        if o == 'h' :
+            if (i1 == 1 and i2 == 0) or (i1 == 0 and i2 == 2) or (i1 == 2 and i2 == 1) : 
+                return True
+            else :
+                return False 
+        else :  
+            if (i1 == 0 and i2 == 1) or (i1 == 1 and i2 == 2) or (i1 == 2 and i2 == 0) : 
+                return True
+            else :
+                return False  
+
+    def adjacent(self,face) :
+        f = self.to_list()
+        F = [[face.a, face.b],[face.a, face.c],[face.b, face.c]]
+
+        check = False
+        i = 0
+        test = F[i]
+        while not check and i<2 : 
+            check = all(item in f for item in test)
+            i += 1
+            test = F[i]
+        return check
+
     def set(self, array):
         """
         Sets a face from an array of strings representing vector indices (starting at 1)

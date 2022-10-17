@@ -1,9 +1,9 @@
 from gettext import npgettext
-from openpyxl import NUMPY
+from openpyxl import NUMPY as np
 
-
-import numpy as np
 from math import *
+import numpy as np
+import obja
 
 #def construction maillage de base
 #def identification des patch 
@@ -99,3 +99,39 @@ def makeBarycentricCoordsMatrix (vertices_origine_base, f) :
 
         return (1/aera) * C 
 
+def determine_patch(bord,model_origine) : 
+    faces_origine = model_origine.faces
+    vertices_origine = model_origine.vertices
+    A = []
+    P = []
+    O = []
+
+    for i in range(len(bord)-1) :
+        vi = bord[i]
+        viplus1 = bord[i+1]
+        for k in range(len(faces)) :
+            if faces[k].isIn(vi) and faces[k].isIn(viplus1) :
+                if faces[k].orientation(vi,viplus1,'h') :
+                    if faces[k] not in A : 
+                        A.append(faces[k])
+                        P.append(faces[k])
+                else :
+                    O.append(faces[k])
+
+    while A != [] :
+        f = A[0]
+        A.remove(f)
+        for k in range(len(faces)) :
+            if (faces[k] not in P) and f.adjacent(faces[k]) and (faces[k] not in O):
+                    P.append(faces[k])
+                    A.append(faces[k])
+    return P
+
+def partition(bords,model_origine) :
+    patch = {}
+    for i in range(len(bords)) :
+        patch[i] = determine_patch(bord[i],model_origine)
+
+    return patch 
+        
+        
