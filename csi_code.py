@@ -44,7 +44,7 @@ def projection(model_base,model_origine,patch):
         # x2 = x2 - (1/np.linalg.norm(x1)) * np.dot(x2,x1) * x1
         # x3 = np.cross(x1,x2) #(theroriquement norm(x3) = 1)
         
-        patch_courant = patch[i]
+        patch_courant = patch.get(i)
 
         # PArcous de sommets du modèle d'origine
         # appartenant au patch correspondant à une face du modèle de base
