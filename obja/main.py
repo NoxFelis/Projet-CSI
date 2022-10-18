@@ -7,9 +7,6 @@ import csi_code as cc
 
 DATA_DIR = getcwd()
 
-def patcher(input_mesh,base_mesh):
-	return patch
-
 # renvoie la face du input mesh auquel appartient le sommet et les poids barycentriques
 # sommet : array(3) : coordonnées relatives dans la face du base_mesh d'un point
 # patch_i : list(int) :	liste des faces du input_mesh qui sont projetées dans la face du base mesh que l'on utilise	
