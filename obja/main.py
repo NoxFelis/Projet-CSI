@@ -32,6 +32,8 @@ def recherche_face(sommet,patch_i,correspondance):
 	return poids,face
 
 # TODO add arguments
+# soit on a déjà les points juste pour la face qu'on analyse (comment on met à jour)
+# soit on doit récuperer uniquement les points dans la face en utilisant les coordonnées barycentriques
 def erreur():
 	max = float('-inf')
 	
