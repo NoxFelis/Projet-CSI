@@ -3,6 +3,7 @@
 import sys
 import numpy as np
 import random
+import csi_code as cc
 
 """
 obja model for python.
@@ -36,6 +37,11 @@ class Face:
         f = self.to_list()
         return v in f
 
+    def isInside(self,v):
+        C = cc.makeBarycentricCoordsMatrix(v,self)
+        r = C.dot(v)
+        return r[0]>=0 and r[1]>=0 and r[2]>=0
+
     def orientation(self,v1,v2,o) :
         f = self.to_list()            
         i1 = f.index(v1)
@@ -64,6 +70,8 @@ class Face:
             i += 1
             test = F[i]
         return check
+
+    
 
     def set(self, array):
         """

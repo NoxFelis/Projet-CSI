@@ -77,6 +77,11 @@ def recherche_face(sommet,patch_i,correspondance):
 			break
 	return poids,face
 
+# TODO
+def distance(self,face):
+	return 0
+
+
 # soit on a déjà les points juste pour la face qu'on analyse (comment on met à jour)
 # soit on doit récuperer uniquement les points dans la face en utilisant les coordonnées barycentriques
 # f : int : index  de la face inter_mesh (ou final_mesh c'est pareil)
@@ -84,10 +89,36 @@ def recherche_face(sommet,patch_i,correspondance):
 # input_mesh : Model : input_mesh
 # final_mesh : Output 
 # inter_mesh : Output
-# face_base : int : indice de la face du base_mesh sur lequel on travaille
 # patch : dict(int,list(int)) : associe l'indice d'une face du base_mesh aux indices de faces du input_mesh qui sont incluses
-def erreur(face,face_base,correspondance,input_mesh,final_mesh,inter_mesh,patch):
+# f_inter : int : index de la face dans le inter et final_mesh
+# f_base : int : index de la face du base_mesh correspondant
+def erreur(f_inter,f_base,patch,input_mesh,final_mesh,inter_mesh,correspondance):
 	max = float('-inf')
+	face_inter = inter_mesh.face[f_inter]
+	face_final = final_mesh.face[f_inter]
+	# pour toutes les faces projetés dans la face du base_mesh
+	for f in patch[f_base]:
+		face = input_mesh.face[f] # Face
+		# pour chaque sommet de cette face
+		# on récupère les coordonnées projetées
+		a_projete = correspondance[face.a][0:2]
+		# on voit si ce point est dans la face avec les coordonées du inter_mesh
+		if face_inter.isInside(a_projete):
+			#on calcule donc la distance de ce point à la face face_final
+			dist = face.a.distance_plan(face_final)
+			max = max if dist>max else max
+
+		b_projete = correspondance[face.b][0:2]
+		if face_inter.isInside(b_projete):
+			#on calcule donc la distance de ce point à la face face_final
+			dist = face.b.distance_plan(face_final)
+			max = max if dist>max else max
+
+		c_projete = correspondance[face.c][0:2]
+		if face_inter.isInside(c_projete):
+			#on calcule donc la distance de ce point à la face face_final
+			dist = face.c.distance_plan(face_final)
+			max = max if dist>max else max
 	
 	return max
 
@@ -195,8 +226,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 		for index_face_final in L.keys():	# pour chaque face (du final_mesh) restante 
 			
 			# on calcul l'erreur E(f)
-			# TODO
-			E[index_face_final] = erreur()/diag_bound
+			E[index_face_final] = erreur(index_face_final,L[index_face_final],patch,input_mesh,final_mesh,inter_mesh,correspondance)/diag_bound
 			
 			# si cette erreur est inférieure à un seuil, on considère la face suffisamment proche du input_mesh
 			if E[index_face_final] < Seuil :	
