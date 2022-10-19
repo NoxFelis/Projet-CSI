@@ -7,6 +7,55 @@ import csi_code as cc
 
 DATA_DIR = getcwd()
 
+# path : string : path of entry mesh
+def division_4(path):
+	input_mesh = obja.parse_file(path)
+
+	mesh = obja.Output()
+	# on va tout copier
+	for i in len(input_mesh.faces): # pour chaque face du base mesh
+		face = input_mesh.faces[i]	# face : Face
+
+		# on ajoute les sommets au final_mesh
+		# rappel : une face est l'association de 3 indices des sommets le formant
+		[ida,idb,idc] = [face.a,face.b,face.c]
+
+		# on ajoute dans final_mesh les sommets (attention il faut les copier)
+		mesh.add_vertex(ida,input_mesh.vertices[ida])
+		mesh.add_vertex(idb,input_mesh.vertices[idb])
+		mesh.add_vertex(idc,input_mesh.vertices[idc])
+
+		#maintenant on peut ajouter la face dans final_mesh
+		mesh.add_face(i,face)	# vu que normalement c'est les mêmes indices
+
+
+	indice_f = len(mesh.faces)
+	indice_v = len(mesh.vertices)
+	for f in mesh.faces.keys():
+		[s1,s2,s3] = mesh.faces[f]
+		a = np.sum(0.5*s3,0.5*s1)	#barycentre s3 s1
+		b = np.sum(0.5*s3,0.5*s2)	#barycentre s3 s2
+		c = np.sum(0.5*s1,0.5*s2)	# barycentre s1 s2
+
+		# on ajoute les 3 points au mesh
+		[idv1,idv2,idv3] = [indice_v+1,indice_v+2,indice_v+3]
+		mesh.add_vertex(idv1,a)
+		mesh.add_vertex(idv2,b)
+		mesh.add_vertex(idv3,c)
+		indice_v += 3
+
+		#on peut donc mtn créer les 4 nouvelles faces du mesh
+		[idf1,idf2,idf3,idf4] = [indice_f+1,indice_f+2,indice_f+3,indice_f+4]
+		mesh.add_face(idf1,[s1,idv3,idv1])
+		mesh.add_face(idf2,[idv3,s2,idv2])
+		mesh.add_face(idf3,[idv3,idv2,idv1])
+		mesh.add_face(idf4,[idv1,idv2,s3])
+		indice_f+=4
+
+		# et il faut mtn enlever la première face du mesh
+		mesh.delete_face(f)
+	return mesh
+
 # renvoie la face du input mesh auquel appartient le sommet et les poids barycentriques
 # sommet : array(3) : coordonnées relatives dans la face du base_mesh d'un point
 # patch_i : list(int) :	liste des faces du input_mesh qui sont projetées dans la face du base mesh que l'on utilise	
@@ -28,13 +77,19 @@ def recherche_face(sommet,patch_i,correspondance):
 			break
 	return poids,face
 
-# TODO add arguments
 # soit on a déjà les points juste pour la face qu'on analyse (comment on met à jour)
 # soit on doit récuperer uniquement les points dans la face en utilisant les coordonnées barycentriques
-def erreur():
+# f : int : index  de la face inter_mesh (ou final_mesh c'est pareil)
+# correspondance : dict(int,[int:4]) : associe des points du input_mesh  et leurs projections dans la face du base_mesh correspondants (et distance)
+# input_mesh : Model : input_mesh
+# final_mesh : Output 
+# inter_mesh : Output
+# face_base : int : indice de la face du base_mesh sur lequel on travaille
+# patch : dict(int,list(int)) : associe l'indice d'une face du base_mesh aux indices de faces du input_mesh qui sont incluses
+def erreur(face,face_base,correspondance,input_mesh,final_mesh,inter_mesh,patch):
 	max = float('-inf')
 	
-	return -1
+	return max
 
 """ def projection(input_mesh, base_mesh, patch):
 	# une fois qu'on à la répartition pour les patchs on peut projeter les points sur les faces du base mesh
@@ -97,7 +152,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 	inter_mesh = obja.Output() #le inter_mesh représente le final mesh, mais strictement dans les repères relatifs du base_mesh
 
 	# on va aussi initialiser la liste sur laquelle on va travailler qui va avoir les indices correspondant aux faces
-	# en fait ce sera un dictionnaire avec en clé l'indice de face du final_mesh, et en clé l'indice de la face du base_mesh auquel elle appartient
+	# en fait ce sera un dictionnaire avec en clé l'indice de face du final_mesh, et en valeurs l'indice de la face du base_mesh auquel elle appartient
 	L = dict();
 
 	# on va tout copier
@@ -151,7 +206,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 			# on travail avec les coordonnées 2D relatives
 			# on divise chaque face f en 4 triangles 
 			# rappel; base(s3:s1,s2)
-			[s1,s2,s3] = inter_mesh.face_mapping[index_face_final]
+			[s1,s2,s3] = inter_mesh.faces[index_face_final]
 			a = np.sum(0.5*s3,0.5*s1)	#barycentre s3 s1
 			b = np.sum(0.5*s3,0.5*s2)	#barycentre s3 s2
 			c = np.sum(0.5*s1,0.5*s2)	# barycentre s1 s2
@@ -180,11 +235,11 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 
 			#finalement on retire la face sur laquelle on vient de travailler
 			face_base = L[index_face_final]
-			del final_mesh.face_mapping[index_face_final]
+			final_mesh.delete_face(index_face_final)
 			
 
 			#avec les mêmes indices on va le faire pour le intermesh
-			del inter_mesh.face_mapping[index_face_final]
+			inter_mesh.delete_face(index_face_final)
 			inter_mesh.add_vertex(idv1,a)
 			inter_mesh.add_vertex(idv2,b)
 			inter_mesh.add_vertex(idv3,c)

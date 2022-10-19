@@ -315,6 +315,8 @@ class Output:
         self.face_mapping = dict()
         self.output = output
         self.random_color = random_color
+        self.vertices = dict()
+        self.faces = dict()
 
     def add_vertex(self, index, vertex):
         """
@@ -322,6 +324,8 @@ class Output:
         """
         self.vertex_mapping[index] = len(self.vertex_mapping)
         print('v {} {} {}'.format(vertex[0], vertex[1], vertex[2]), file=self.output)
+        self.vertices[index] = vertex
+
 
     def edit_vertex(self, index, vertex):
         """
@@ -332,6 +336,7 @@ class Output:
         else:
             print('ev {} {} {} {}'.format(self.vertex_mapping[index] + 1, vertex[0], vertex[1], vertex[2]),
                   file=self.output)
+        self.vertices[index] = vertex
 
     def add_face(self, index, face):
         """
@@ -345,6 +350,7 @@ class Output:
         ),
             file=self.output
         )
+        self.faces[index] = face
 
         if self.random_color:
             print('fc {} {} {} {}'.format(
@@ -367,6 +373,30 @@ class Output:
         ),
             file=self.output
         )
+        self.faces[index] = face
+
+    def delete_face(self, index):
+        """
+        Deletes a specified face.
+        """
+        print('df {} '.format(
+            self.face_mapping[index] + 1
+        ),
+            file=self.output
+        )
+        del self.faces[index]
+
+    def delete_vertex(self,index):
+        """
+        Deletes a specified face.
+        """
+        print('dv {} '.format(
+            self.vertex_mapping[index] + 1
+        ),
+            file=self.output
+        )
+        del self.vertices[index]
+
 
 
 def main():
