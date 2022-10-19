@@ -1,3 +1,4 @@
+import math
 import obja
 import numpy as np
 import os
@@ -5,9 +6,6 @@ from os import getcwd
 import csi_code as cc
 
 DATA_DIR = getcwd()
-
-def patcher(input_mesh,base_mesh):
-	return patch
 
 # renvoie la face du input mesh auquel appartient le sommet et les poids barycentriques
 # sommet : array(3) : coordonnées relatives dans la face du base_mesh d'un point
@@ -31,8 +29,11 @@ def recherche_face(sommet,patch_i,correspondance):
 	return poids,face
 
 # TODO add arguments
+# soit on a déjà les points juste pour la face qu'on analyse (comment on met à jour)
+# soit on doit récuperer uniquement les points dans la face en utilisant les coordonnées barycentriques
 def erreur():
-	#TODO
+	max = float('-inf')
+	
 	return -1
 
 """ def projection(input_mesh, base_mesh, patch):
@@ -60,6 +61,28 @@ def erreur():
 				correspondance[idp] = p_prim
 
 	return correspondance """
+
+# permet de trouver la bounding box du input_mesh en cherchant les deux coins les plus éloignés
+# on cherche donc toutes les valeurs min et toutes les valeurs max
+# input_mesh : Model : le mesh d'entrée
+def bound_box(input_mesh):
+	minx = float('inf')
+	miny = float('inf')
+	minz = float('inf')
+	maxx = float('-inf')
+	maxy = float('-inf')
+	maxz = float('-inf')
+	for vertex in input_mesh.vertices:
+		x = vertex[0]
+		y = vertex[1]
+		z = vertex[2]
+		minx = x if x < minx else minx
+		miny = y if y < miny else miny
+		minz = z if z < minz else minz
+		maxx = x if x > maxx else maxx
+		maxy = y if y > maxy else maxy
+		maxz = z if z > maxz else maxz
+	return [minx,miny,minz],[maxx,maxy,maxz]
 
 # travaille la subdivision jusqu'à obtenir un mesh semi_régulier
 # input_mesh : 	Model :		le mesh d'origine (coordonées des sommets dans repère monde)
@@ -105,8 +128,8 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 	indice_f = len(L)
 	indice_v = 3*(indice_f+1)
 	# on calcul aussi la longueur de la diagonale de la bounding_box du input_mesh
-	# TODO
-	bound_box = 1
+	min_val,max_val = bound_box(input_mesh)
+	diag_bound = math.dist(min_val,max_val)
 	Seuil = 1
 
 	# une fois l'initialisation faite nous pouvons procéder à la subdivision à proprement parler
@@ -118,7 +141,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 			
 			# on calcul l'erreur E(f)
 			# TODO
-			E[index_face_final] = erreur()/bound_box
+			E[index_face_final] = erreur()/diag_bound
 			
 			# si cette erreur est inférieure à un seuil, on considère la face suffisamment proche du input_mesh
 			if E[index_face_final] < Seuil :	
