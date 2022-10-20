@@ -2,7 +2,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import dijkstra
 import time
-from obja import *
+import obja as obja
 
 EPSILON = 0.00001
 START = 0
@@ -590,7 +590,7 @@ def get_reel_indexes_base_mesh(input_path="./bunny_input.obj", base_path="./bunn
 
   return reel_indexes, base_faces, base_vertices
 
-def get_reel_indexes_base_mesh_new(model, base_path="./bunny_base.obj"):
+def get_reel_indexes_base_mesh_new(model, base_path="./sphere_base.obj"):
   base_faces, base_vertices = read_obj(base_path)
   #faces, vertices = read_obj(input_path)
   reel_indexes = np.zeros(base_vertices.shape[0], dtype = int)
@@ -601,7 +601,7 @@ def get_reel_indexes_base_mesh_new(model, base_path="./bunny_base.obj"):
     mini = 10 #/!\
     r = c
     for v in range(len(model.vertices)):
-
+      
       if np.linalg.norm(c - model.vertices[v]) < mini:
         r = v
         mini = np.linalg.norm(c - model.vertices[v])
@@ -873,9 +873,9 @@ def get_limit(input_path):
   #tic = time.time()
 
   #faces, vertices = read_obj("./bunny_input.obj")
-  model = parse_file(input_path)
+  model = obja.parse_file(input_path)
   #model = division_4(input_path)
-  reel_indexes, base_faces, base_vertices = get_reel_indexes_base_mesh_new(model, base_path="./bunny_base.obj")
+  reel_indexes, base_faces, base_vertices = get_reel_indexes_base_mesh_new(model, base_path="./sphere_base.obj")
 
   graph, np_graph = create_graph(model)
 
@@ -930,11 +930,11 @@ def get_limit(input_path):
 
   #toc = time.time()
           
-  return S_P, reel_indexes#, toc -tic
+  return S_P, reel_indexes,model#, toc -tic
 
 # path : string : path of entry mesh
 def division_4(path):
-    input_mesh = parse_file(path)
+    input_mesh = obja.parse_file(path)
 
     mesh = obja.Output()
     # on va tout copier
@@ -978,7 +978,7 @@ def division_4(path):
         indice_f+=4
 
         # et il faut mtn enlever la première face du mesh
-        #del mesh.face_mapping(f)
+        mesh.delete_face(f)
     return mesh
 
 

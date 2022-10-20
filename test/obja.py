@@ -3,7 +3,6 @@
 import sys
 import numpy as np
 import random
-import csi_code as cc
 
 """
 obja model for python.
@@ -37,9 +36,9 @@ class Face:
         f = self.to_list()
         return v in f
 
-    def isInside(self,correspondance,v):
-        C = cc.makeBarycentricCoordsMatrix(correspondance,self)
-        r = np.matmul(C,np.array(v))
+    def isInside(self,v):
+        C = cc.makeBarycentricCoordsMatrix(v,self)
+        r = C.dot(v)
         return r[0]>=0 and r[1]>=0 and r[2]>=0
 
     def orientation(self,v1,v2,o) :
@@ -61,13 +60,14 @@ class Face:
     def adjacent(self,face) :
         f = self.to_list()
         F = [[face.a, face.b],[face.a, face.c],[face.b, face.c]]
+
         check = False
         i = 0
-        while not check and i<=2 :
-            test = F[i]
+        test = F[i]
+        while not check and i<2 : 
             check = all(item in f for item in test)
             i += 1
-            
+            test = F[i]
         return check
 
     
@@ -330,7 +330,7 @@ class Output:
         Adds a new vertex to the model with the specified index.
         """
         self.vertex_mapping[index] = len(self.vertex_mapping)
-        #print('v {} {} {}'.format(vertex[0], vertex[1], vertex[2]), file=self.output)
+        print('v {} {} {}'.format(vertex[0], vertex[1], vertex[2]), file=self.output)
         self.vertices[index] = vertex
 
 
@@ -338,11 +338,11 @@ class Output:
         """
         Changes the coordinates of a vertex.
         """
-##        if len(self.vertex_mapping) == 0:
-##            print('ev {} {} {} {}'.format(index, vertex[0], vertex[1], vertex[2]), file=self.output)
-##        else:
-##            print('ev {} {} {} {}'.format(self.vertex_mapping[index] + 1, vertex[0], vertex[1], vertex[2]),
-##                  file=self.output)
+        if len(self.vertex_mapping) == 0:
+            print('ev {} {} {} {}'.format(index, vertex[0], vertex[1], vertex[2]), file=self.output)
+        else:
+            print('ev {} {} {} {}'.format(self.vertex_mapping[index] + 1, vertex[0], vertex[1], vertex[2]),
+                  file=self.output)
         self.vertices[index] = vertex
 
     def add_face(self, index, face):
@@ -350,58 +350,58 @@ class Output:
         Adds a face to the model.
         """
         self.face_mapping[index] = len(self.face_mapping)
-##        print('f {} {} {}'.format(
-##            self.vertex_mapping[face.a] + 1,
-##            self.vertex_mapping[face.b] + 1,
-##            self.vertex_mapping[face.c] + 1,
-##        ),
-##            file=self.output
-##        )
+        print('f {} {} {}'.format(
+            self.vertex_mapping[face.a] + 1,
+            self.vertex_mapping[face.b] + 1,
+            self.vertex_mapping[face.c] + 1,
+        ),
+            file=self.output
+        )
         self.faces[index] = face
 
-##        if self.random_color:
-##            print('fc {} {} {} {}'.format(
-##                len(self.face_mapping),
-##                random.uniform(0, 1),
-##                random.uniform(0, 1),
-##                random.uniform(0, 1)),
-##                file=self.output
-##            )
+        if self.random_color:
+            print('fc {} {} {} {}'.format(
+                len(self.face_mapping),
+                random.uniform(0, 1),
+                random.uniform(0, 1),
+                random.uniform(0, 1)),
+                file=self.output
+            )
 
     def edit_face(self, index, face):
         """
         Changes the indices of the vertices of the specified face.
         """
-##        print('ef {} {} {} {}'.format(
-##            self.face_mapping[index] + 1,
-##            self.vertex_mapping[face.a] + 1,
-##            self.vertex_mapping[face.b] + 1,
-##            self.vertex_mapping[face.c] + 1
-##        ),
-##            file=self.output
-##        )
+        print('ef {} {} {} {}'.format(
+            self.face_mapping[index] + 1,
+            self.vertex_mapping[face.a] + 1,
+            self.vertex_mapping[face.b] + 1,
+            self.vertex_mapping[face.c] + 1
+        ),
+            file=self.output
+        )
         self.faces[index] = face
 
     def delete_face(self, index):
         """
         Deletes a specified face.
         """
-##        print('df {} '.format(
-##            self.face_mapping[index] + 1
-##        ),
-##            file=self.output
-##        )
+        print('df {} '.format(
+            self.face_mapping[index] + 1
+        ),
+            file=self.output
+        )
         del self.faces[index]
 
     def delete_vertex(self,index):
         """
         Deletes a specified face.
         """
-##        print('dv {} '.format(
-##            self.vertex_mapping[index] + 1
-##        ),
-##            file=self.output
-##        )
+        print('dv {} '.format(
+            self.vertex_mapping[index] + 1
+        ),
+            file=self.output
+        )
         del self.vertices[index]
 
 
