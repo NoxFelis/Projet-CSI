@@ -242,7 +242,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
                 to_del = []
                 for index_face_final in L.keys():	# pour chaque face (du final_mesh) restante 
                         # on calcul l'erreur E(f)
-                        E[index_face_final] = erreur(index_face_final,L[index_face_final],patch,input_mesh,final_mesh,inter_mesh,correspondance)/diag_bound
+                        #E[index_face_final] = erreur(index_face_final,L.get(index_face_final),patch,input_mesh,final_mesh,inter_mesh,correspondance[index_face_final]/diag_bound)
 
 ##                        # si cette erreur est inférieure à un seuil, on considère la face suffisamment proche du input_mesh
 ##                        if E[index_face_final] < Seuil :
@@ -265,9 +265,9 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
 
                         print(a,b,c)
                         #pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
-                        (poids_a,fa) = recherche_face(a,patch.get(L.get(index_face_final)),correspondance)
-                        (poids_b,fb) = recherche_face(b,patch.get(L.get(index_face_final)),correspondance)
-                        (poids_c,fc) = recherche_face(c,patch.get(L.get(index_face_final)),correspondance)
+                        (poids_a,fa) = recherche_face(a,patch.get(index_face_final),correspondance[index_face_final])
+                        (poids_b,fb) = recherche_face(b,patch.get(index_face_final),correspondance[index_face_final])
+                        (poids_c,fc) = recherche_face(c,patch.get(index_face_final),correspondance[index_face_final])
                         # on a donc les coordonnées dans le plan relatif à la face du base_mesh 
 
                         #il faut donc mtn stocker ces valeurs dans le final_mesh
@@ -342,7 +342,7 @@ def main(args=None):
         # 4 - On projète les patchs sur le maillage de base
         
         correspondance = cc.projection(input_mesh, base_mesh, patch) # correspondance: dict(id vertex 3D, vertex2D)
-        print(correspondance)
+        print(len(correspondance))
         # 5 - On travaille la subdivision
         final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance) # final_mesh : Output
         print(len(final_mesh.faces))

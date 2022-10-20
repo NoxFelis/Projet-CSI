@@ -24,7 +24,7 @@ def projection(model_origine,model_base,patch):
 
     #vertices_origine_base = np.ones((np.size(vertices_origine)))
     #distance_origine_base = np.ones((len(vertices_origine)))
-    vertices_origine_base = dict()
+    vertices_origine_base = []
 
     # Parcours de face du maillage de base 
     for k in range(len(faces_base)) :
@@ -47,6 +47,7 @@ def projection(model_origine,model_base,patch):
         # x3 = np.cross(x1,x2) #(theroriquement norm(x3) = 1)        
 
         patch_courant = transform_patch(patch.get(k))
+        projection_points = dict()
         # PArcous de sommets du modèle d'origine
         # appartenant au patch correspondant à une face du modèle de base
         for i in range(len(patch_courant)) : 
@@ -62,8 +63,8 @@ def projection(model_origine,model_base,patch):
 
             dist_proj = np.linalg.norm(P - coord_p_proj)
 
-            vertices_origine_base[patch_courant[i]] = P_proj#.append(dist_proj)
-            #distance_origine_base[patch_courant[i]] = dist_proj
+            projection_points[patch_courant[i]] = P_proj
+        vertices_origine_base.append(projection_points)#.append(dist_proj)
     return vertices_origine_base #, distance_origine_base
     
     
