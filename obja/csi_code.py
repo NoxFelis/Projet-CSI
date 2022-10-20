@@ -27,26 +27,26 @@ def projection(model_origine,model_base,patch):
     vertices_origine_base = dict()
 
     # Parcours de face du maillage de base 
-    for i in range(len(faces_base)) :
+    for k in range(len(faces_base)) :
 
-        f = faces_base[i]
+        f = faces_base[k]
         A = vertices_base[f.a]
         B = vertices_base[f.b]
         C = vertices_base[f.c]
 
         # Création de la "base" de la face sur laquelle on projette
-        x1 = C - A
-        x2 = C - B
+        x1 = B - A
+        x2 = C - A
 
-        x1 = (1/np.linalg.norm(x1)) * x1
-        x2 = (1/np.linalg.norm(x2)) * x2
+##        x1 = (1/np.linalg.norm(x1)) * x1
+##        x2 = (1/np.linalg.norm(x2)) * x2
 
         # si on veut une base orthonormée  
         # x1 = (1/np.linalg.norm(x1) * x1)
         # x2 = x2 - (1/np.linalg.norm(x1)) * np.dot(x2,x1) * x1
         # x3 = np.cross(x1,x2) #(theroriquement norm(x3) = 1)        
-        patch_courant = transform_patch(patch.get(i))
 
+        patch_courant = transform_patch(patch.get(k))
         # PArcous de sommets du modèle d'origine
         # appartenant au patch correspondant à une face du modèle de base
         for i in range(len(patch_courant)) : 
@@ -64,8 +64,8 @@ def projection(model_origine,model_base,patch):
 
             vertices_origine_base[patch_courant[i]] = P_proj#.append(dist_proj)
             #distance_origine_base[patch_courant[i]] = dist_proj
-
     return vertices_origine_base #, distance_origine_base
+    
     
 def aera_triangle(v1,v2,v3) : 
     return  v2[0] * v3[1] - v2[1] * v3[0] + v3[0] * v1[1] - v1[0] * v3[1] + v1[0] * v2[1] - v2[0] * v1[1]

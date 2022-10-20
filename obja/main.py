@@ -60,22 +60,25 @@ DATA_DIR = getcwd()
 # renvoie la face du input mesh auquel appartient le sommet et les poids barycentriques
 # sommet : array(3) : coordonnées relatives dans la face du base_mesh d'un point
 # patch_i : list(int) :	liste des faces du input_mesh qui sont projetées dans la face du base mesh que l'on utilise	
-# correspondance: dict(int, [int:4]) : 	associe a l'id d'un point du input_mesh, les coordoonées relatives 2D du 
+# correspondance: dict(int, [int:3]) : 	associe a l'id d'un point du input_mesh, les coordoonées relatives 2D du 
 # 										base_mesh ET la distance entre ces 2 points
 # poids : [int:3] : poids de calcul pour le barycentre
-# face : int : id de la face dans le input_mesh (projeté) auquel appartient le point
+# face : Face :  face dans le input_mesh (projeté) auquel appartient le point
 def recherche_face(sommet,patch_i,correspondance):
         poids = [None,None,None]
         face = -1
-        for f in patch_i:	# pour chaque face du input
+        epsilon = - math.pow(10,-2)
+        print(sommet)
+        for k in range(len(patch_i)): # pour chaque face du input
                 #on a la face avec les points projetés
-                projected_f = obja.Face(correspondance[f.a][0:2],correspondance[f.b][0:2],correspondance[f.c][0:2])
-                C = cc.makeBarycentricCoordsMatrix(sommet, projected_f) 
-                r = C.dot(sommet) # r représente les poids barycentriques
-                if r[0] >= 0 and r[1]>=0 and r[2]>=0:
+                f = patch_i[k]
+                C = cc.makeBarycentricCoordsMatrix(correspondance, f)
+                r = np.matmul(C,sommet) # r représente les poids barycentriques
+                if r[0] >= epsilon and r[1]>=epsilon and r[2]>=epsilon:
                         face = f
                         poids = r
-                break
+                        break
+        print(face)
         return poids,face
 
 # calcule la distance d'un point à un plan
@@ -209,9 +212,9 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
                 final_mesh.add_vertex(idb,base_mesh.vertices[idb])
                 final_mesh.add_vertex(idc,base_mesh.vertices[idc])
 
-                inter_mesh.add_vertex(ida,[1,0,0])
-                inter_mesh.add_vertex(idb,[0,1,0])
-                inter_mesh.add_vertex(idc,[0,0,0])
+                inter_mesh.add_vertex(ida,np.array([0,0,0]))
+                inter_mesh.add_vertex(idb,np.array([1,0,0]))
+                inter_mesh.add_vertex(idc,np.array([0,1,0]))
 
                 #maintenant on peut ajouter la face dans final_mesh
                 final_mesh.add_face(i,face)	# vu que normalement c'est les mêmes indices
@@ -227,45 +230,52 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
         min_val,max_val = bound_box(input_mesh)
         diag_bound = math.dist(min_val,max_val)
         Seuil = 1
-
+        kmax = 10
+        iter = 0
 # une fois l'initialisation faite nous pouvons procéder à la subdivision à proprement parler
 # on va boucler sur les étapes suivantes tant qu'il reste une face à traiter
-        #while len(L) > 0:
+        while len(L) > 0 and iter < kmax:
+                iter+=1
+                print(iter)
+                E = dict()
+                to_add = []
+                to_del = []
+                for index_face_final in L.keys():	# pour chaque face (du final_mesh) restante 
+                        # on calcul l'erreur E(f)
+                        E[index_face_final] = erreur(index_face_final,L[index_face_final],patch,input_mesh,final_mesh,inter_mesh,correspondance)/diag_bound
 
-        E = dict()
-        to_add = []
-        to_del = []
-        for index_face_final in L.keys():	# pour chaque face (du final_mesh) restante 
+##                        # si cette erreur est inférieure à un seuil, on considère la face suffisamment proche du input_mesh
+##                        if E[index_face_final] < Seuil :
+##                                to_del.append(index_face_final)	
+##                                #del L[index_face_final]
+##                                continue
+##                        else :
+                                # on travail avec les coordonnées 2D relatives
+                                # on divise chaque face f en 4 triangles 
+                                # rappel; base(s3:s1,s2)
+                        f = inter_mesh.faces.get(index_face_final)
+                        [i1,i2,i3] = [f.a,f.b,f.c]
+                        s1 = inter_mesh.vertices.get(i1)
+                        s2 = inter_mesh.vertices.get(i2)
+                        s3 = inter_mesh.vertices.get(i3)
+                
+                        a = 0.5*s3 + 0.5*s1	#barycentre s3 s1
+                        b = 0.5*s3 + 0.5*s2	#barycentre s3 s2
+                        c = 0.5*s1 + 0.5*s2	# barycentre s1 s2
 
-                # on calcul l'erreur E(f)
-                E[index_face_final] = erreur(index_face_final,L[index_face_final],patch,input_mesh,final_mesh,inter_mesh,correspondance)/diag_bound
-
-                # si cette erreur est inférieure à un seuil, on considère la face suffisamment proche du input_mesh
-                if E[index_face_final] < Seuil :
-                        to_del.append(index_face_final)	
-                        #del L[index_face_final]
-                        continue
-                else :
-                        # on travail avec les coordonnées 2D relatives
-                        # on divise chaque face f en 4 triangles 
-                        # rappel; base(s3:s1,s2)
-                        [s1,s2,s3] = inter_mesh.faces[index_face_final]
-                        a = np.sum(0.5*s3,0.5*s1)	#barycentre s3 s1
-                        b = np.sum(0.5*s3,0.5*s2)	#barycentre s3 s2
-                        c = np.sum(0.5*s1,0.5*s2)	# barycentre s1 s2
-
+                        print(a,b,c)
                         #pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
-                        (poids_a,fa) = recherche_face(a,patch[L[index_face_final]],correspondance)
-                        (poids_b,fb) = recherche_face(b,patch[L[index_face_final]],correspondance)
-                        (poids_c,fc) = recherche_face(c,patch[L[index_face_final]],correspondance)
+                        (poids_a,fa) = recherche_face(a,patch.get(L.get(index_face_final)),correspondance)
+                        (poids_b,fb) = recherche_face(b,patch.get(L.get(index_face_final)),correspondance)
+                        (poids_c,fc) = recherche_face(c,patch.get(L.get(index_face_final)),correspondance)
                         # on a donc les coordonnées dans le plan relatif à la face du base_mesh 
 
                         #il faut donc mtn stocker ces valeurs dans le final_mesh
                         #on commence on crée les 3 nouveaux vertex dans le final_mesh
                         [idv1,idv2,idv3] = [indice_v+1,indice_v+2,indice_v+3]
-                        final_mesh.add_vertex(idv1,np.sum(np.sum(poids_a[0]*input_mesh.vertices[fa.a],poids_a[1]*input_mesh.vertices[fa.b]),poids_a[2]*input_mesh.vertices[fa.c]))
-                        final_mesh.add_vertex(idv2,np.sum(np.sum(poids_b[0]*input_mesh.vertices[fb.a],poids_b[1]*input_mesh.vertices[fb.b]),poids_b[2]*input_mesh.vertices[fb.c]))
-                        final_mesh.add_vertex(idv3,np.sum(np.sum(poids_c[0]*input_mesh.vertices[fc.a],poids_c[1]*input_mesh.vertices[fc.b]),poids_c[2]*input_mesh.vertices[fc.c]))
+                        final_mesh.add_vertex(idv1,poids_a[0]*input_mesh.vertices[fa.a] + poids_a[1]*input_mesh.vertices[fa.b] + poids_a[2]*input_mesh.vertices[fa.c])
+                        final_mesh.add_vertex(idv2,poids_b[0]*input_mesh.vertices[fb.a] + poids_b[1]*input_mesh.vertices[fb.b] + poids_b[2]*input_mesh.vertices[fb.c])
+                        final_mesh.add_vertex(idv3,poids_c[0]*input_mesh.vertices[fc.a] + poids_c[1]*input_mesh.vertices[fc.b] + poids_c[2]*input_mesh.vertices[fc.c])
                         indice_v += 3
 
                         #on peut donc mtn créer les 4 nouvelles faces du final_mesh
@@ -277,7 +287,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
                         indice_f+=4
 
                         #finalement on retire la face sur laquelle on vient de travailler
-                        face_base = L[index_face_final]
+                        face_base = L.get(index_face_final)
                         final_mesh.delete_face(index_face_final)
 
 
@@ -301,10 +311,10 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
                         #L[idf3] = face_base
                         #L[idf4] = face_base
                         to_add.append([[idf1,face_base],[idf2,face_base],[idf3,face_base],[idf4,face_base]])
-        for delete in to_del:
-                del L[delete]
-        for add in to_add:
-                L[add[0]] = add[1]
+                for delete in to_del:
+                        del L[delete]
+                for add in to_add:
+                        L[add[0]] = add[1]
         return final_mesh
 
 def main(args=None):
@@ -335,7 +345,8 @@ def main(args=None):
         print(correspondance)
         # 5 - On travaille la subdivision
         final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance) # final_mesh : Output
-
+        print(len(final_mesh.faces))
+        print(len(final_mesh.vertices))
         with open('test_sphere.obj','w') as output :
                 for k in final_mesh.vertices.keys() :
                         v = final_mesh.vertices.get(k)
@@ -344,7 +355,7 @@ def main(args=None):
                         face = final_mesh.faces.get(i)
                         output.write(f'f {face.a + 1} {face.b + 1} {face.c + 1}\n')
         # on retourne le maillage semi-régulier
-        print(args)
+        #print(args)
         return final_mesh
 
 if __name__ == '__main__':
