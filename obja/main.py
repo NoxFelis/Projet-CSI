@@ -77,9 +77,18 @@ def recherche_face(sommet,patch_i,correspondance):
 			break
 	return poids,face
 
-# TODO
-def distance(self,face):
-	return 0
+# calcule la distance d'un point à un plan
+# point : np[int:3] : point
+# face : Face : la face qui nous permet de définir le plan
+def distance_plan(point,face):
+	# pour calculer la distance d'un point à un plan il faut d'abord projeter ce point dans le plan
+	# soit les vecteurs x1 et x2
+	x1 = face.a - face.c
+	x2 = face.b - face.c
+	point_proj = np.dot(point,x1)*x1 + np.dot(point,x2)*x2
+
+	# et ensuite on calcule la distance de point à point_proj
+	return np.linalg.norm(point-point_proj)
 
 
 # soit on a déjà les points juste pour la face qu'on analyse (comment on met à jour)
@@ -105,19 +114,19 @@ def erreur(f_inter,f_base,patch,input_mesh,final_mesh,inter_mesh,correspondance)
 		# on voit si ce point est dans la face avec les coordonées du inter_mesh
 		if face_inter.isInside(a_projete):
 			#on calcule donc la distance de ce point à la face face_final
-			dist = face.a.distance_plan(face_final)
+			dist = distance_plan(face.a,face_final)
 			max = max if dist>max else max
 
 		b_projete = correspondance[face.b][0:2]
 		if face_inter.isInside(b_projete):
 			#on calcule donc la distance de ce point à la face face_final
-			dist = face.b.distance_plan(face_final)
+			dist = distance_plan(face.b,face_final)
 			max = max if dist>max else max
 
 		c_projete = correspondance[face.c][0:2]
 		if face_inter.isInside(c_projete):
 			#on calcule donc la distance de ce point à la face face_final
-			dist = face.c.distance_plan(face_final)
+			dist = distance_plan(face.c,face_final)
 			max = max if dist>max else max
 	
 	return max
