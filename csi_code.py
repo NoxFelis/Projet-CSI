@@ -1,9 +1,10 @@
 from gettext import npgettext
-from openpyxl import NUMPY as np
 
 from math import *
+import random
 import numpy as np
 import obja
+import patch_limit as pl
 
 #def construction maillage de base
 #def identification des patch 
@@ -99,39 +100,82 @@ def makeBarycentricCoordsMatrix (vertices_origine_base, f) :
 
         return (1/aera) * C 
 
-def determine_patch(bord,model_origine) : 
-    faces_origine = model_origine.faces
+def determine_patch(bord,model_origine,color,colors) :
+    bord = bord[0] + bord[1][1:] + bord[2][1:]
+    B = bord
+    faces = model_origine.faces
     vertices_origine = model_origine.vertices
     A = []
     P = []
     O = []
-
+    
     for i in range(len(bord)-1) :
         vi = bord[i]
         viplus1 = bord[i+1]
         for k in range(len(faces)) :
             if faces[k].isIn(vi) and faces[k].isIn(viplus1) :
-                if faces[k].orientation(vi,viplus1,'h') :
-                    if faces[k] not in A : 
+                if faces[k].orientation(vi,viplus1,'a') :
+                    if faces[k] not in A :
                         A.append(faces[k])
                         P.append(faces[k])
+                        colors[faces[k].a] = color
+                        colors[faces[k].b] = color
+                        colors[faces[k].c] = color
                 else :
                     O.append(faces[k])
-
     while A != [] :
         f = A[0]
         A.remove(f)
         for k in range(len(faces)) :
             if (faces[k] not in P) and f.adjacent(faces[k]) and (faces[k] not in O):
                     P.append(faces[k])
+                    colors[faces[k].a] = color
+                    colors[faces[k].b] = color
+                    colors[faces[k].c] = color
                     A.append(faces[k])
-    return P
+    return P,colors
 
-def partition(bords,model_origine) :
+def partition(path) :  
+    bords,r, model_origine = pl.get_limit("bunny.obj")
+    colors = {}
     patch = {}
-    for i in range(len(bords)) :
-        patch[i] = determine_patch(bord[i],model_origine)
+    for i in range(0,len(bords)-3,3) :   
+        patch[i] = determine_patch(test_bord([bords[i],bords[i+1],bords[i+2]]),model_origine,[random.uniform(0,1),random.uniform(0,1),random.uniform(0,1)],colors)
+    return patch, colors
 
-    return patch 
-        
-        
+def test_bord(bord) :
+    if bord[0][1] == bord[2][-2] :
+        bord[0] = bord[0][1:]
+        bord[2] = bord[2][:-1]
+    if bord[0][-2] == bord[1][1] :
+        bord[0] = bord[0][:-1]
+        bord[1] = bord[1][1:]
+    if bord[1][-2] == bord[2][1] :
+        bord[1] = bord[1][:-1]
+        bord[2] = bord[2][1:]
+    return bord 
+    
+patch,colors = partition(p,model_origine)
+
+##with open('test_bunny.obja','w') as output :
+##    for v in model_origine.vertices : 
+##        output.write(f'v {v[0]} {v[1]} {v[2]}\n')
+##    for i in range(len(model_origine.faces)) :
+##        face = model_origine.faces[i]
+##        output.write(f'f {face.a + 1} {face.b + 1} {face.c + 1}\n')
+##    for k, c in colors.items() :
+##        output.write(f'fc {k + 1} {c[0]} {c[1]} {c[2]}\n')
+##        
+
+with open('test_bunny.obj','w') as output :
+    for k in range(len(model_origine.vertices)) :
+        v = model_origine.vertices[k]
+        if  k in colors :
+            c = colors.get(k)
+            output.write(f'v {v[0]} {v[1]} {v[2]} {c[0]} {c[1]} {c[2]}\n')
+        else :
+            output.write(f'v {v[0]} {v[1]} {v[2]} 1.0 1.0 1.0\n')
+    for i in range(len(model_origine.faces)) :
+        face = model_origine.faces[i]
+        output.write(f'f {face.a + 1} {face.b + 1} {face.c + 1}\n')
+
