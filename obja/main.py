@@ -233,69 +233,78 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
         #while len(L) > 0:
 
         E = dict()
+        to_add = []
+        to_del = []
         for index_face_final in L.keys():	# pour chaque face (du final_mesh) restante 
 
                 # on calcul l'erreur E(f)
                 E[index_face_final] = erreur(index_face_final,L[index_face_final],patch,input_mesh,final_mesh,inter_mesh,correspondance)/diag_bound
 
                 # si cette erreur est inférieure à un seuil, on considère la face suffisamment proche du input_mesh
-                if E[index_face_final] < Seuil :	
-                        del L[index_face_final]
+                if E[index_face_final] < Seuil :
+                        to_del.append(index_face_final)	
+                        #del L[index_face_final]
                         continue
+                else :
+                        # on travail avec les coordonnées 2D relatives
+                        # on divise chaque face f en 4 triangles 
+                        # rappel; base(s3:s1,s2)
+                        [s1,s2,s3] = inter_mesh.faces[index_face_final]
+                        a = np.sum(0.5*s3,0.5*s1)	#barycentre s3 s1
+                        b = np.sum(0.5*s3,0.5*s2)	#barycentre s3 s2
+                        c = np.sum(0.5*s1,0.5*s2)	# barycentre s1 s2
 
-                # on travail avec les coordonnées 2D relatives
-                # on divise chaque face f en 4 triangles 
-                # rappel; base(s3:s1,s2)
-                [s1,s2,s3] = inter_mesh.faces[index_face_final]
-                a = np.sum(0.5*s3,0.5*s1)	#barycentre s3 s1
-                b = np.sum(0.5*s3,0.5*s2)	#barycentre s3 s2
-                c = np.sum(0.5*s1,0.5*s2)	# barycentre s1 s2
+                        #pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
+                        (poids_a,fa) = recherche_face(a,patch[L[index_face_final]],correspondance)
+                        (poids_b,fb) = recherche_face(b,patch[L[index_face_final]],correspondance)
+                        (poids_c,fc) = recherche_face(c,patch[L[index_face_final]],correspondance)
+                        # on a donc les coordonnées dans le plan relatif à la face du base_mesh 
 
-                #pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
-                (poids_a,fa) = recherche_face(a,patch[L[index_face_final]],correspondance)
-                (poids_b,fb) = recherche_face(b,patch[L[index_face_final]],correspondance)
-                (poids_c,fc) = recherche_face(c,patch[L[index_face_final]],correspondance)
-                # on a donc les coordonnées dans le plan relatif à la face du base_mesh 
+                        #il faut donc mtn stocker ces valeurs dans le final_mesh
+                        #on commence on crée les 3 nouveaux vertex dans le final_mesh
+                        [idv1,idv2,idv3] = [indice_v+1,indice_v+2,indice_v+3]
+                        final_mesh.add_vertex(idv1,np.sum(np.sum(poids_a[0]*input_mesh.vertices[fa.a],poids_a[1]*input_mesh.vertices[fa.b]),poids_a[2]*input_mesh.vertices[fa.c]))
+                        final_mesh.add_vertex(idv2,np.sum(np.sum(poids_b[0]*input_mesh.vertices[fb.a],poids_b[1]*input_mesh.vertices[fb.b]),poids_b[2]*input_mesh.vertices[fb.c]))
+                        final_mesh.add_vertex(idv3,np.sum(np.sum(poids_c[0]*input_mesh.vertices[fc.a],poids_c[1]*input_mesh.vertices[fc.b]),poids_c[2]*input_mesh.vertices[fc.c]))
+                        indice_v += 3
 
-                #il faut donc mtn stocker ces valeurs dans le final_mesh
-                #on commence on crée les 3 nouveaux vertex dans le final_mesh
-                [idv1,idv2,idv3] = [indice_v+1,indice_v+2,indice_v+3]
-                final_mesh.add_vertex(idv1,np.sum(np.sum(poids_a[0]*input_mesh.vertices[fa.a],poids_a[1]*input_mesh.vertices[fa.b]),poids_a[2]*input_mesh.vertices[fa.c]))
-                final_mesh.add_vertex(idv2,np.sum(np.sum(poids_b[0]*input_mesh.vertices[fb.a],poids_b[1]*input_mesh.vertices[fb.b]),poids_b[2]*input_mesh.vertices[fb.c]))
-                final_mesh.add_vertex(idv3,np.sum(np.sum(poids_c[0]*input_mesh.vertices[fc.a],poids_c[1]*input_mesh.vertices[fc.b]),poids_c[2]*input_mesh.vertices[fc.c]))
-                indice_v += 3
+                        #on peut donc mtn créer les 4 nouvelles faces du final_mesh
+                        [idf1,idf2,idf3,idf4] = [indice_f+1,indice_f+2,indice_f+3,indice_f+4]
+                        final_mesh.add_face(idf1,[s1,idv3,idv1])
+                        final_mesh.add_face(idf2,[idv3,s2,idv2])
+                        final_mesh.add_face(idf3,[idv3,idv2,idv1])
+                        final_mesh.add_face(idf4,[idv1,idv2,s3])
+                        indice_f+=4
 
-                #on peut donc mtn créer les 4 nouvelles faces du final_mesh
-                [idf1,idf2,idf3,idf4] = [indice_f+1,indice_f+2,indice_f+3,indice_f+4]
-                final_mesh.add_face(idf1,[s1,idv3,idv1])
-                final_mesh.add_face(idf2,[idv3,s2,idv2])
-                final_mesh.add_face(idf3,[idv3,idv2,idv1])
-                final_mesh.add_face(idf4,[idv1,idv2,s3])
-                indice_f+=4
-
-                #finalement on retire la face sur laquelle on vient de travailler
-                face_base = L[index_face_final]
-                final_mesh.delete_face(index_face_final)
+                        #finalement on retire la face sur laquelle on vient de travailler
+                        face_base = L[index_face_final]
+                        final_mesh.delete_face(index_face_final)
 
 
-                #avec les mêmes indices on va le faire pour le intermesh
-                inter_mesh.delete_face(index_face_final)
-                inter_mesh.add_vertex(idv1,a)
-                inter_mesh.add_vertex(idv2,b)
-                inter_mesh.add_vertex(idv3,c)
+                        #avec les mêmes indices on va le faire pour le intermesh
+                        inter_mesh.delete_face(index_face_final)
+                        inter_mesh.add_vertex(idv1,a)
+                        inter_mesh.add_vertex(idv2,b)
+                        inter_mesh.add_vertex(idv3,c)
 
-                inter_mesh.add_face(idf1,[s1,idv3,idv1])
-                inter_mesh.add_face(idf2,[idv3,s2,idv2])
-                inter_mesh.add_face(idf3,[idv3,idv2,idv1])
-                inter_mesh.add_face(idf4,[idv1,idv2,s3])
+                        inter_mesh.add_face(idf1,[s1,idv3,idv1])
+                        inter_mesh.add_face(idf2,[idv3,s2,idv2])
+                        inter_mesh.add_face(idf3,[idv3,idv2,idv1])
+                        inter_mesh.add_face(idf4,[idv1,idv2,s3])
 
-                del L[index_face_final]
-                #pour ajouter les 4 nouvelles
-                L[idf1] = face_base
-                L[idf2] = face_base
-                L[idf3] = face_base
-                L[idf4] = face_base
+                        to_del.append(index_face_final)
+                        #del L[index_face_final]
 
+                        #pour ajouter les 4 nouvelles
+                        #L[idf1] = face_base
+                        #L[idf2] = face_base
+                        #L[idf3] = face_base
+                        #L[idf4] = face_base
+                        to_add.append([[idf1,face_base],[idf2,face_base],[idf3,face_base],[idf4,face_base]])
+        for delete in to_del:
+                del L[delete]
+        for add in to_add:
+                L[add[0]] = add[1]
         return final_mesh
 
 def main(args=None):
