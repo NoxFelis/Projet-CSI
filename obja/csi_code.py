@@ -25,47 +25,55 @@ def projection(model_origine,model_base,patch):
     #vertices_origine_base = np.ones((np.size(vertices_origine)))
     #distance_origine_base = np.ones((len(vertices_origine)))
     vertices_origine_base = []
-
+    coordonnees = []
     # Parcours de face du maillage de base 
     for k in range(len(faces_base)) :
 
         f = faces_base[k]
-        A = vertices_base[f.a]
-        B = vertices_base[f.b]
-        C = vertices_base[f.c]
+        print(f)
+        a1 = vertices_base[f.a]
+        a2 = vertices_base[f.b]
+        a3 = vertices_base[f.c]
 
         # Création de la "base" de la face sur laquelle on projette
-        x1 = B - A
-        x2 = C - A
+        x1 = a2[0:3] - a1[0:3]
+        print(x1)
+        x2 = a3[0:3] - a1[0:3]
 
-##        x1 = (1/np.linalg.norm(x1)) * x1
-##        x2 = (1/np.linalg.norm(x2)) * x2
+        n = np.cross(x1,x2)
+        x1 = (1/np.linalg.norm(x1)) * x1
+        x2 = (1/np.linalg.norm(x2)) * x2
+        #n = (1/np.linalg.norm(n)) * n
 
         # si on veut une base orthonormée  
-        # x1 = (1/np.linalg.norm(x1) * x1)
-        # x2 = x2 - (1/np.linalg.norm(x1)) * np.dot(x2,x1) * x1
+        x2 = x2 - (1/np.linalg.norm(x1)) * np.dot(x2,x1) * x1
+        x2 = (1/np.linalg.norm(x2)) * x2
         # x3 = np.cross(x1,x2) #(theroriquement norm(x3) = 1)        
-
         patch_courant = transform_patch(patch.get(k))
         projection_points = dict()
+        coordonnees_points = []
         # PArcous de sommets du modèle d'origine
         # appartenant au patch correspondant à une face du modèle de base
-        for i in range(len(patch_courant)) : 
+        for i in range(len(patch_courant)) :
+            
             P = vertices_origine[patch_courant[i]]
-
             # P_proj = (P.x1) * x1 + (P.x2) * x2 (".": produit scalaire et "*" : produit par un scalaire)
             u = np.dot(P,x1)
             v = np.dot(P,x2)
 
             P_proj = [u,v,0]
-
+            print(P_proj)
             coord_p_proj = u * x1 + v * x2
 
             dist_proj = np.linalg.norm(P - coord_p_proj)
 
             projection_points[patch_courant[i]] = P_proj
-        vertices_origine_base.append(projection_points)#.append(dist_proj)
-    return vertices_origine_base #, distance_origine_base
+            coordonnees_points.append(coord_p_proj - n)
+        
+        vertices_origine_base.append(projection_points)
+        coordonnees.append(coordonnees_points)
+        
+    return vertices_origine_base#, coordonnees#, distance_origine_base
     
     
 def aera_triangle(v1,v2,v3) : 
@@ -78,6 +86,7 @@ def aera_triangle(v1,v2,v3) :
 def makeBarycentricCoordsMatrix (vertices_origine_base, f) :
         
         C = np.zeros((3,3))
+        print(len(vertices_origine_base))
         v1 = vertices_origine_base.get(f.a)
         v2 = vertices_origine_base.get(f.b)
         v3 = vertices_origine_base.get(f.c)
@@ -124,8 +133,11 @@ def determine_patch(bord,model_origine,color,colors,faces_restantes) :
                         A.append(f)
                         P.append(f)
                         K.append(k)
+                    if f.a not in bord : 
                         colors[f.a] = color
+                    if f.b not in bord :
                         colors[f.b] = color
+                    if f.c not in bord : 
                         colors[f.c] = color
                         
                 else :
@@ -139,9 +151,12 @@ def determine_patch(bord,model_origine,color,colors,faces_restantes) :
                 P.append(face)
                 A.append(face)
                 K.append(k)
-                colors[face.a] = color
-                colors[face.b] = color
-                colors[face.c] = color
+                if face.a not in bord : 
+                    colors[face.a] = color
+                if face.b not in bord :
+                    colors[face.b] = color
+                if face.c not in bord : 
+                    colors[face.c] = color
     supp_keys(faces_restantes,K)
     return P,colors
 
@@ -163,7 +178,7 @@ def partition(bords, model_origine) :
     patch = {}
     p = 0
     for i in range(0,len(bords)-2,3) :
-        patch[p],colors = determine_patch(test_bord([bords[i],bords[i+1],bords[i+2]]),model_origine,[i*0.05, i* 0.05, i * 0.05],colors,faces_restantes)
+        patch[p],colors = determine_patch(test_bord([bords[i],bords[i+1],bords[i+2]]),model_origine,[1.0, i* 0.05, i * 0.05],colors,faces_restantes)
         p+=1
     return patch, colors,faces_restantes
 

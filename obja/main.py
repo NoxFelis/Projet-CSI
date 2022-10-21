@@ -212,9 +212,11 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
                 final_mesh.add_vertex(idb,base_mesh.vertices[idb])
                 final_mesh.add_vertex(idc,base_mesh.vertices[idc])
 
-                inter_mesh.add_vertex(ida,np.array([0,0,0]))
-                inter_mesh.add_vertex(idb,np.array([1,0,0]))
-                inter_mesh.add_vertex(idc,np.array([0,1,0]))
+                # il faut récupérer les coordonnées des points dans l'input mesh projeté pour le patch correspondant
+##                print(correspondance[i].get(ida))
+##                inter_mesh.add_vertex(ida,correspondance[i].get(ida))
+##                inter_mesh.add_vertex(idb,correspondance[i].get(idb))
+##                inter_mesh.add_vertex(idc,correspondance[i].get(idc))
 
                 #maintenant on peut ajouter la face dans final_mesh
                 final_mesh.add_face(i,face)	# vu que normalement c'est les mêmes indices
@@ -263,8 +265,8 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
                         b = 0.5*s3 + 0.5*s2	#barycentre s3 s2
                         c = 0.5*s1 + 0.5*s2	# barycentre s1 s2
 
-                        print(a,b,c)
                         #pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
+                        #print(len(correspondance),index_face_final)
                         (poids_a,fa) = recherche_face(a,patch.get(index_face_final),correspondance[index_face_final])
                         (poids_b,fb) = recherche_face(b,patch.get(index_face_final),correspondance[index_face_final])
                         (poids_c,fc) = recherche_face(c,patch.get(index_face_final),correspondance[index_face_final])
