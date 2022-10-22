@@ -8,7 +8,7 @@ import patch_limit as pl
 
 DATA_DIR = getcwd()
 
-### path : string : path of entry mesh
+""" ### path : string : path of entry mesh
 ##def division_4(path):
 ##	input_mesh = obja.parse_file(path)
 ##
@@ -55,7 +55,7 @@ DATA_DIR = getcwd()
 ##
 ##		# et il faut mtn enlever la première face du mesh
 ##		mesh.delete_face(f)
-##	return mesh
+##	return mesh """
 
 # renvoie la face du input mesh auquel appartient le sommet et les poids barycentriques
 # sommet : array(3) : coordonnées relatives dans la face du base_mesh d'un point
@@ -189,7 +189,7 @@ def bound_box(input_mesh):
 # patch :		dict(int,list(int))	:		associe l'indice d'une face du base_mesh aux indices de faces du input_mesh qui sont incluses 
 # correspondance : 	dict(int,[int,4]) : 	associe l'indice d'un sommet du input_mesh aux coordoonées RELATIVES (base: (s3:s1,s2))
 #									 		de sa projection dans la bonne face et la DISTANCE entre ces points
-def subdivision(input_mesh, base_mesh,patch, correspondance):
+def subdivision(input_mesh, base_mesh,patch, correspondance,r):
         # initialisation : liste L avec toutes les faces du mesh
         # on commence déjà par créer le modèle sur lequel on va travailler, qui est une copie du base_mesh
         final_mesh = obja.Output("sphere_test_sub.obja")
@@ -208,19 +208,19 @@ def subdivision(input_mesh, base_mesh,patch, correspondance):
                 [ida,idb,idc] = [face.a,face.b,face.c]
 
                 # on ajoute dans final_mesh les sommets (attention il faut les copier)
-                final_mesh.add_vertex(ida,base_mesh.vertices[ida])
-                final_mesh.add_vertex(idb,base_mesh.vertices[idb])
-                final_mesh.add_vertex(idc,base_mesh.vertices[idc])
+                final_mesh.add_vertex(r[ida],base_mesh.vertices[ida][0:2])
+                final_mesh.add_vertex(r[idb],base_mesh.vertices[idb][0:2])
+                final_mesh.add_vertex(r[idc],base_mesh.vertices[idc][0:2])
 
                 # il faut récupérer les coordonnées des points dans l'input mesh projeté pour le patch correspondant
-##                print(correspondance[i].get(ida))
-##                inter_mesh.add_vertex(ida,correspondance[i].get(ida))
-##                inter_mesh.add_vertex(idb,correspondance[i].get(idb))
-##                inter_mesh.add_vertex(idc,correspondance[i].get(idc))
+                #print(correspondance[i].get(ida))
+                inter_mesh.add_vertex(r[ida],correspondance[i].get(r[ida]))
+                inter_mesh.add_vertex(r[idb],correspondance[i].get(r[idb]))
+                inter_mesh.add_vertex(r[idc],correspondance[i].get(r[idc]))
 
                 #maintenant on peut ajouter la face dans final_mesh
-                final_mesh.add_face(i,face)	# vu que normalement c'est les mêmes indices
-                inter_mesh.add_face(i,face)
+                final_mesh.add_face(i,obja.Face(r[ida],r[idb],r[idc]))	# vu que normalement c'est les mêmes indices
+                inter_mesh.add_face(i,obja.Face(r[ida],r[idb],r[idc]))
 
                 # on peut aussi ajouter les indices des faces directement dans la liste L
                 L[i] = i
@@ -346,7 +346,7 @@ def main(args=None):
         correspondance = cc.projection(input_mesh, base_mesh, patch) # correspondance: dict(id vertex 3D, vertex2D)
         print(len(correspondance))
         # 5 - On travaille la subdivision
-        final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance) # final_mesh : Output
+        final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance,r) # final_mesh : Output
         print(len(final_mesh.faces))
         print(len(final_mesh.vertices))
         with open('test_sphere.obj','w') as output :
