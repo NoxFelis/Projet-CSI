@@ -523,7 +523,7 @@ def find_shortest_path_old(dist_matrix, predecessors, graph, start, end, nb_inpu
 
   return short_path_input, short_path_all
 
-def find_shortest_path(dist_matrix, predecessors, graph, start, end, nb_input_vertices):
+def find_shortest_path(dist_matrix, predecessors, graph, start, end, nb_input_vertices,s_p):
 
   
 
@@ -531,13 +531,8 @@ def find_shortest_path(dist_matrix, predecessors, graph, start, end, nb_input_ve
   current = start
   short_path = [start]
   
-  
-  while current != end:
-
-    
-
-    short_path = short_path + [predecessors[end,current]]
-    current = predecessors[end,current]
+  short_path = short_path + [predecessors[end,current]]
+  current = predecessors[end,current]
 
   return short_path
   
@@ -890,7 +885,7 @@ def get_limit(input_path):
   n_v = len(model.vertices)
 
   dist_matrix, predecessors = dijkstra(csgraph=graph, directed=False, return_predecessors=True)
-  
+
   for f in range(base_faces.shape[0]): #range(1):#
     print(f)
 
@@ -899,7 +894,7 @@ def get_limit(input_path):
     end = base_faces[f, 2] -1
     end = reel_indexes[end]
 
-    s_p = find_shortest_path(dist_matrix, predecessors, graph, start, end, n_v)
+    s_p = find_shortest_path(dist_matrix, predecessors, graph, start, end, n_v,[])
     S_P.append(s_p)
     
 
@@ -908,7 +903,7 @@ def get_limit(input_path):
     end = base_faces[f, 3] -1
     end = reel_indexes[end]
 
-    s_p = find_shortest_path(dist_matrix, predecessors, graph, start, end, n_v)
+    s_p = find_shortest_path(dist_matrix, predecessors, graph, start, end, n_v,s_p)
     S_P.append(s_p)
     
 
@@ -917,9 +912,9 @@ def get_limit(input_path):
     end = base_faces[f, 1] -1
     end = reel_indexes[end]
 
-    s_p = find_shortest_path(dist_matrix, predecessors, graph, start, end, n_v)
+    s_p = find_shortest_path(dist_matrix, predecessors, graph, start, end, n_v,s_p)
     S_P.append(s_p)
-    
+
 
   #print(S_P_A)
   #for p in S_P:

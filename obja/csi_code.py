@@ -6,6 +6,31 @@ import numpy as np
 import obja
 import patch_limit as pl
 
+def calcul_base(a1,a2,a3) :
+    # Création de la "base" de la face sur laquelle on projette
+    x1 = a2[0:3] - a1[0:3]
+    x2 = a3[0:3] - a1[0:3]
+
+    n = np.cross(x1,x2)
+    x1 = (1/np.linalg.norm(x1)) * x1
+    x2 = (1/np.linalg.norm(x2)) * x2
+    #n = (1/np.linalg.norm(n)) * n
+
+    # si on veut une base orthonormée  
+    x2 = x2 - (1/np.linalg.norm(x1)) * np.dot(x2,x1) * x1
+    x2 = (1/np.linalg.norm(x2)) * x2
+    
+    return x1,x2
+
+def projection_point(x1,x2,P) :
+    u = np.dot(P,x1)
+    v = np.dot(P,x2)
+
+    proj = np.array([u,v,0])
+    coord_p_proj = u * x1 + v * x2
+
+    return proj,coord_p_proj
+    
 #def construction maillage de base
 #def identification des patch 
 #def projection 
@@ -30,54 +55,33 @@ def projection(model_origine,model_base,patch):
     for k in range(len(faces_base)) :
 
         f = faces_base[k]
-        print(f)
-        a1 = vertices_base[f.a]
-        a2 = vertices_base[f.b]
-        a3 = vertices_base[f.c]
 
-        # Création de la "base" de la face sur laquelle on projette
-        x1 = a2[0:3] - a1[0:3]
-        print(x1)
-        x2 = a3[0:3] - a1[0:3]
-
-        n = np.cross(x1,x2)
-        x1 = (1/np.linalg.norm(x1)) * x1
-        x2 = (1/np.linalg.norm(x2)) * x2
-        #n = (1/np.linalg.norm(n)) * n
-
-        # si on veut une base orthonormée  
-        x2 = x2 - (1/np.linalg.norm(x1)) * np.dot(x2,x1) * x1
-        x2 = (1/np.linalg.norm(x2)) * x2
-        # x3 = np.cross(x1,x2) #(theroriquement norm(x3) = 1)        
+        x1,x2 = calcul_base(vertices_base[f.a],vertices_base[f.b],vertices_base[f.c])
+        
         patch_courant = transform_patch(patch.get(k))
         projection_points = dict()
-        coordonnees_points = []
-        # PArcous de sommets du modèle d'origine
+        
+        # parcous de sommets du modèle d'origine
         # appartenant au patch correspondant à une face du modèle de base
         for i in range(len(patch_courant)) :
             
             P = vertices_origine[patch_courant[i]]
-            # P_proj = (P.x1) * x1 + (P.x2) * x2 (".": produit scalaire et "*" : produit par un scalaire)
-            u = np.dot(P,x1)
-            v = np.dot(P,x2)
+            
 
-            P_proj = [u,v,0]
-            print(P_proj)
-            coord_p_proj = u * x1 + v * x2
-
+            P_proj, coord_p_proj = projection_point(x1,x2,P)
+            
             dist_proj = np.linalg.norm(P - coord_p_proj)
 
             projection_points[patch_courant[i]] = P_proj
-            coordonnees_points.append(coord_p_proj - n)
         
         vertices_origine_base.append(projection_points)
-        coordonnees.append(coordonnees_points)
+
         
     return vertices_origine_base#, coordonnees#, distance_origine_base
     
     
 def aera_triangle(v1,v2,v3) : 
-    return  v2[0] * v3[1] - v2[1] * v3[0] + v3[0] * v1[1] - v1[0] * v3[1] + v1[0] * v2[1] - v2[0] * v1[1]
+    return  (v2[0] * v3[1]) - (v2[1] * v3[0]) + (v3[0] * v1[1]) - (v1[0] * v3[1]) + (v1[0] * v2[1]) - (v2[0] * v1[1])
 
 
 #vertices_origine_base : dict(int,[int:4]) (indice du vertex dans le input_mesh, coordonnées projection + distance)
@@ -86,13 +90,12 @@ def aera_triangle(v1,v2,v3) :
 def makeBarycentricCoordsMatrix (vertices_origine_base, f) :
         
         C = np.zeros((3,3))
-        print(len(vertices_origine_base))
         v1 = vertices_origine_base.get(f.a)
         v2 = vertices_origine_base.get(f.b)
         v3 = vertices_origine_base.get(f.c)
         
         aera = aera_triangle(v1,v2,v3)
-        
+
         x1 = v1[0]
         y1 = v1[1]
         x2 = v2[0]
@@ -100,13 +103,13 @@ def makeBarycentricCoordsMatrix (vertices_origine_base, f) :
         x3 = v3[0]
         y3 = v3[1]
 
-        C[0,0] = (x2 * y3 - x3 * y2)
+        C[0,0] = ((x2 * y3) - (x3 * y2))
         C[0,1] = (y2 - y3) 
         C[0,2] = (x3 - x2) 
-        C[1,0] = (x3 * y1 - x1 * y3) 
+        C[1,0] = ((x3 * y1) - (x1 * y3)) 
         C[1,1] = (y3 - y1) 
         C[1,2] = (x1 - x3) 
-        C[2,0] = (x1 * y2 - x2 * y1) 
+        C[2,0] = ((x1 * y2) - (x2 * y1)) 
         C[2,1] = (y1 - y2) 
         C[2,2] = (x2 - x1) 
 
@@ -116,7 +119,6 @@ def makeBarycentricCoordsMatrix (vertices_origine_base, f) :
 def determine_patch(bord,model_origine,color,colors,faces_restantes) :
     bord = bord[0] + bord[1][1:] + bord[2][1:]
     B = bord
-
     A = []
     P = []
     O = []
@@ -133,12 +135,7 @@ def determine_patch(bord,model_origine,color,colors,faces_restantes) :
                         A.append(f)
                         P.append(f)
                         K.append(k)
-                    if f.a not in bord : 
-                        colors[f.a] = color
-                    if f.b not in bord :
-                        colors[f.b] = color
-                    if f.c not in bord : 
-                        colors[f.c] = color
+                        colors[k] = color
                         
                 else :
                     O.append(f)
@@ -151,12 +148,7 @@ def determine_patch(bord,model_origine,color,colors,faces_restantes) :
                 P.append(face)
                 A.append(face)
                 K.append(k)
-                if face.a not in bord : 
-                    colors[face.a] = color
-                if face.b not in bord :
-                    colors[face.b] = color
-                if face.c not in bord : 
-                    colors[face.c] = color
+                colors[k] = color
     supp_keys(faces_restantes,K)
     return P,colors
 
@@ -177,8 +169,8 @@ def partition(bords, model_origine) :
     colors = {}
     patch = {}
     p = 0
-    for i in range(0,len(bords)-2,3) :
-        patch[p],colors = determine_patch(test_bord([bords[i],bords[i+1],bords[i+2]]),model_origine,[1.0, i* 0.05, i * 0.05],colors,faces_restantes)
+    for i in range(0,len(bords) - 2,3) :
+        patch[p],colors = determine_patch(test_bord([bords[i],bords[i+1],bords[i+2]]),model_origine,[1.0, i* 0.05, i * 0.01],colors,faces_restantes)
         p+=1
     return patch, colors,faces_restantes
 
