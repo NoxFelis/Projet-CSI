@@ -225,6 +225,20 @@ def bound_box(input_mesh):
                 maxz = z if z > maxz else maxz
         return [minx,miny,minz],[maxx,maxy,maxz]
 
+# renvoie le sommet le plus proche du point a
+def plus_proche(sommet,patch_i,correspondance_i,input_mesh):
+        point = -1
+        dist = float('inf')
+        for face in patch_i:    # pour chaque face dans la liste de faces
+                if np.linalg.norm(sommet-correspondance_i[face.a]) < dist:
+                        point = face.a
+                if np.linalg.norm(sommet-correspondance_i[face.b]) < dist:
+                        point = face.b
+                if np.linalg.norm(sommet-correspondance_i[face.c]) < dist:
+                        point = face.c        
+        return input_mesh.vertices[point]
+
+
 # travaille la subdivision jusqu'à obtenir un mesh semi_régulier
 # input_mesh : 	Model :		le mesh d'origine (coordonées des sommets dans repère monde)
 # base_mesh : 	Model : 	le base_mesh (coordonnées des sommets dans repère monde)
@@ -235,7 +249,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
         # initialisation : liste L avec toutes les faces du mesh
         # on commence déjà par créer le modèle sur lequel on va travailler, qui est une copie du base_mesh
         output = open("sphere_final_mesh.obja",'w') 
-        final_mesh = obja.Output(output)
+        final_mesh = obja.Output(output,True)
         inter = open("sphere_inter_mesh.obja",'w')
         inter_mesh = obja.Output(inter) #le inter_mesh représente le final mesh, mais strictement dans les repères relatifs du base_mesh
 
@@ -295,7 +309,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
         min_val,max_val = bound_box(input_mesh)
         diag_bound = math.dist(min_val,max_val)
         Seuil = 1
-        kmax = 3
+        kmax = 1
         iter = 0
         
         # une fois l'initialisation faite nous pouvons procéder à la subdivision à proprement parler
@@ -360,7 +374,8 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
                                                 idv1 = indice_v
                                                 
                         else :
-                                point = 0.5*final_mesh.vertices[i3] + 0.5*final_mesh.vertices[i1]
+                                point = plus_proche(a,patch.get(L.get(index_face_final)),correspondance[L.get(index_face_final)],input_mesh)
+                                #point = 0.5*final_mesh.vertices[i3] + 0.5*final_mesh.vertices[i1]
                                 match borders.get(frozenset((i1,i3))):
                                         case None:
                                                 indice_v +=1
@@ -397,7 +412,8 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
                                                 borders[frozenset((i2,i3))] = [True,indice_v]
                                                 
                         else :
-                                point = 0.5*final_mesh.vertices[i3] + 0.5*final_mesh.vertices[i2]
+                                #point = 0.5*final_mesh.vertices[i3] + 0.5*final_mesh.vertices[i2]
+                                point = plus_proche(b,patch.get(L.get(index_face_final)),correspondance[L.get(index_face_final)],input_mesh)
                                 match borders.get(frozenset((i2,i3))):
                                         case None:
                                                 indice_v +=1
@@ -435,7 +451,8 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
                                                 borders[frozenset((i1,i2))] = [True,indice_v]
                                                 
                         else :
-                                point = 0.5*final_mesh.vertices[i2] + 0.5*final_mesh.vertices[i1]
+                                #point = 0.5*final_mesh.vertices[i2] + 0.5*final_mesh.vertices[i1]
+                                point = plus_proche(c,patch.get(L.get(index_face_final)),correspondance[L.get(index_face_final)],input_mesh)
                                 match borders.get(frozenset((i1,i2))):
                                         case None:
                                                 indice_v +=1
