@@ -135,8 +135,12 @@ def determine_patch(bord,model_origine,color,colors,faces_restantes) :
                         A.append(f)
                         P.append(f)
                         K.append(k)
-                        colors[k] = color
-                        
+                        if f.a not in B :
+                            colors[f.a] = color
+                        if f.b not in B :
+                            colors[f.b] = color
+                        if f.c not in B :
+                            colors[f.c] = color
                 else :
                     O.append(f)
     while A != [] :
@@ -148,7 +152,12 @@ def determine_patch(bord,model_origine,color,colors,faces_restantes) :
                 P.append(face)
                 A.append(face)
                 K.append(k)
-                colors[k] = color
+                if f.a not in B :
+                    colors[face.a] = color
+                if f.b not in B :
+                    colors[face.b] = color
+                if f.c not in B :
+                    colors[face.c] = color
     supp_keys(faces_restantes,K)
     return P,colors
 
@@ -194,31 +203,26 @@ def test_bord(bord) :
     if bord[1][-2] == bord[2][1] :
         bord[1] = bord[1][:-1]
         bord[2] = bord[2][1:]
-##    print(bord)
     return bord 
 
-##p,r, input_mesh = pl.get_limit("sphere_input.obj")
-##patch,colors,faces_restantes = partition(p,input_mesh)
-##
-####with open('test_bunny.obja','w') as output :
-####    for v in model_origine.vertices : 
-####        output.write(f'v {v[0]} {v[1]} {v[2]}\n')
-####    for i in range(len(model_origine.faces)) :
-####        face = model_origine.faces[i]
-####        output.write(f'f {face.a + 1} {face.b + 1} {face.c + 1}\n')
-####    for k, c in colors.items() :
-####        output.write(f'fc {k + 1} {c[0]} {c[1]} {c[2]}\n')
-####        
-##
-##with open('test_sphere.obj','w') as output :
-##    for k in range(len(input_mesh.vertices)) :
-##        v = input_mesh.vertices[k]
-##        if  k in colors :
-##            c = colors.get(k)
-##            output.write(f'v {v[0]} {v[1]} {v[2]} {c[0]} {c[1]} {c[2]}\n')
-##        else :
-##            output.write(f'v {v[0]} {v[1]} {v[2]} 1.0 1.0 1.0\n')
-##    for i in range(len(input_mesh.faces)) :
-##        face = input_mesh.faces[i]
-##        output.write(f'f {face.a + 1} {face.b + 1} {face.c + 1}\n')
-##
+def verif_bord(bord1,bord2,bord3) :
+    index13 = -1
+    index12 = -1
+    index23 = -1
+    while bord1[1] == bord3[-2] :
+        bord1 = bord3[1:]
+        bord3 = bord1[:-1]
+        index13 = bord3[end]
+    while bord1[-2] == bord2[1] :
+        bord1 = bord1[:-1]
+        bord2 = bord2[1:]
+        index12 = bord1[end]
+    while bord2[-2] == bord3[1] :
+        bord2 = bord2[:-1]
+        bord3 = bord3[1:]
+        index23 = bord2[end]
+        
+    return index13,index12,index23,[bord1,bord2,bord3]
+def modification_patch(bord,model_base,model_origine) :
+    index13,index12,index23,bord = verif_bord(bord[0],bord[1],bord[2])
+        

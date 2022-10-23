@@ -69,55 +69,56 @@ def recherche_face(sommet,patch_i,correspondance):
         poids = [None,None,None]
         face = -1
         epsilon = - math.pow(10,-2)
-##        plot_correspondance(correspondance, sommet,patch_i)
+        #plot_correspondance(correspondance, sommet,patch_i)
         for k in range(len(patch_i)): # pour chaque face du input
                 #on a la face avec les points projetés
                 f = patch_i[k]
-                #C = cc.makeBarycentricCoordsMatrix(correspondance, f)
-                #r = np.dot(C,sommet) # r représente les poids barycentriques
-                #p_recal = r[0] * correspondance.get(f.a) + r[1] * correspondance.get(f.b) + r[2] * correspondance.get(f.c)
-                #if np.linalg.norm(p_recal - sommet) > 0.00001 :
-                 #       print(p_recal,sommet)
-
-
-##                if r[0] >= epsilon and r[1]>= epsilon and r[2]>=epsilon:
-##                        face = f
-##                        poids = r
-##                        break
-                a1 = correspondance.get(f.a)
-                a2 = correspondance.get(f.b)
-                a3 = correspondance.get(f.c) 
-                x1 = a2 - a1
-                x2 = a3 - a1
-
-                alpha = (det_v(sommet,x1) - det_v(a1,x1))/det_v(a1,x1)
-                beta = (det_v(sommet,x2) - det_v(a1,x2))/det_v(a1,x2)
-                if 1 - (alpha + beta) <= 0.00001 and alpha > epsilon and beta > epsilon :
+                C = cc.makeBarycentricCoordsMatrix(correspondance, f)
+                s = np.array([1,sommet[0],sommet[1]])
+                r = np.dot(C,s) # r représente les poids barycentriques
+                #print('r = ',r)
+                #print(r[0]>= 0,r[1]>=0 ,r[2]>=0.0)
+##                p_recal = r[0] * correspondance.get(f.a) + r[1] * correspondance.get(f.b) + r[2] * correspondance.get(f.c) 
+##                if np.linalg.norm(sommet-p_recal) < 0.0001 :
+##                        print('ok')
+                if r[0] >= epsilon and r[1]>= epsilon and r[2]>=epsilon:
                         face = f
-                        poids = [alpha,beta]
+                        poids = r
                         break
-                
+        print(face)
         return poids,face
 def det_v(u,v) :
     return u[0] * v[1] - u[1] * v[0]
-##def plot_correspondance(correspondance,sommet,patch) :
-##        plt.plot(sommet[0],sommet[1],'ro')
-##        X = []
-##        Y = []
-##        for k in range(len(patch)) :
-##                f = patch[k]
-##                X.append(correspondance.get(f.a)[0])
-##                X.append(correspondance.get(f.b)[0])
-##                X.append(correspondance.get(f.c)[0])
-##                X.append(correspondance.get(f.a)[0])
-##                Y.append(correspondance.get(f.a)[1])
-##                Y.append(correspondance.get(f.b)[1])
-##                Y.append(correspondance.get(f.c)[1])
-##                Y.append(correspondance.get(f.a)[1])
-##                plt.plot(X,Y)
-##                X = []
-##                Y = []
-##        plt.show()
+def plot_correspondance(correspondance,sommet,patch) :
+        plt.plot(sommet[0],sommet[1],'ro')
+        X = []
+        Y = []
+        X_pts = []
+        Y_pts = []
+        for k in range(len(patch)) :
+                f = patch[k]
+                X_pts.append(correspondance.get(f.a)[0])
+                X_pts.append(correspondance.get(f.b)[0])
+                X_pts.append(correspondance.get(f.c)[0])
+
+                Y_pts.append(correspondance.get(f.a)[1])
+                Y_pts.append(correspondance.get(f.b)[1])
+                Y_pts.append(correspondance.get(f.c)[1])
+        for k in range(len(patch)) :
+                f = patch[k]
+                X.append(correspondance.get(f.a)[0])
+                X.append(correspondance.get(f.b)[0])
+                X.append(correspondance.get(f.c)[0])
+                X.append(correspondance.get(f.a)[0])
+                Y.append(correspondance.get(f.a)[1])
+                Y.append(correspondance.get(f.b)[1])
+                Y.append(correspondance.get(f.c)[1])
+                Y.append(correspondance.get(f.a)[1])
+                plt.plot(X,Y)
+                X = []
+                Y = []
+        plt.plot(X_pts,Y_pts,'bo')
+        plt.show()
 # calcule la distance d'un point à un plan
 # point : np[int:3] : point
 # face : Face : la face qui nous permet de définir le plan
@@ -235,40 +236,41 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
         # on va aussi initialiser la liste sur laquelle on va travailler qui va avoir les indices correspondant aux faces
         # en fait ce sera un dictionnaire avec en clé l'indice de face du final_mesh, et en valeurs l'indice de la face du base_mesh auquel elle appartient
         L = dict();
-
+        correspondance_new_index_patch = dict()
         # on va tout copier
-        for i in range(len(base_mesh.faces)): # pour chaque face du base mesh
+        for i in range(1): # pour chaque face du base mesh
                 face = base_mesh.faces[i]	# face : Face
+                print(face)
                 # on ajoute les sommets au final_mesh
                 # rappel : une face est l'association de 3 indices des sommets le formant
                 [ida,idb,idc] = [face.a,face.b,face.c]
 
                 # on ajoute dans final_mesh les sommets (attention il faut les copier)
-                final_mesh.add_vertex(ida,base_mesh.vertices[ida][0:2])
-                final_mesh.add_vertex(idb,base_mesh.vertices[idb][0:2])
-                final_mesh.add_vertex(idc,base_mesh.vertices[idc][0:2])
+                final_mesh.add_vertex(ida,base_mesh.vertices[ida][0:3])
+                final_mesh.add_vertex(idb,base_mesh.vertices[idb][0:3])
+                final_mesh.add_vertex(idc,base_mesh.vertices[idc][0:3])
 
                 # il faut récupérer les coordonnées des points dans l'input mesh projeté pour le patch correspondant
                 #print(correspondance[i].get(ida))
 
-                x1,x2 = cc.calcul_base(base_mesh.vertices[ida][0:2],base_mesh.vertices[idb][0:2],base_mesh.vertices[idc][0:2] )
+                x1,x2 = cc.calcul_base(base_mesh.vertices[ida][0:3],base_mesh.vertices[idb][0:3],base_mesh.vertices[idc][0:3] )
 
                 if r[ida] in correspondance[i] :        
                         inter_mesh.add_vertex(ida,correspondance[i].get(r[ida]))
                 else :
-                        p_projete, coord_p = cc.projection_point(x1,x2,base_mesh.vertices[ida][0:2])
+                        p_projete, coord_p = cc.projection_point(x1,x2,base_mesh.vertices[ida][0:3])
                         inter_mesh.add_vertex(ida,p_projete)
 
                 if r[idb] in correspondance[i] :        
                         inter_mesh.add_vertex(idb,correspondance[i].get(r[idb]))
                 else :
-                        p_projete, coord_p = cc.projection_point(x1,x2,base_mesh.vertices[idb][0:2])
+                        p_projete, coord_p = cc.projection_point(x1,x2,base_mesh.vertices[idb][0:3])
                         inter_mesh.add_vertex(idb,p_projete)
                         
                 if r[idc] in correspondance[i] :        
                         inter_mesh.add_vertex(idc,correspondance[i].get(r[idc]))
                 else :
-                        p_projete, coord_p = cc.projection_point(x1,x2,base_mesh.vertices[idc][0:2])
+                        p_projete, coord_p = cc.projection_point(x1,x2,base_mesh.vertices[idc][0:3])
                         inter_mesh.add_vertex(idc,p_projete)
 
                 #maintenant on peut ajouter la face dans final_mesh
@@ -277,6 +279,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
 
                 # on peut aussi ajouter les indices des faces directement dans la liste L
                 L[i] = i
+                correspondance_new_index_patch[i] = i
 
 
         indice_f = len(L)
@@ -285,7 +288,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
         min_val,max_val = bound_box(input_mesh)
         diag_bound = math.dist(min_val,max_val)
         Seuil = 1
-        kmax = 10
+        kmax = 1
         iter = 0
         
 # une fois l'initialisation faite nous pouvons procéder à la subdivision à proprement parler
@@ -320,26 +323,36 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
 
                         #pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
                         #print(len(correspondance),index_face_final)
-                        (poids_a,fa) = recherche_face(a,patch.get(index_face_final),correspondance[index_face_final])
-                        (poids_b,fb) = recherche_face(b,patch.get(index_face_final),correspondance[index_face_final])
-                        (poids_c,fc) = recherche_face(c,patch.get(index_face_final),correspondance[index_face_final])
+
+                        (poids_a,fa) = recherche_face(a,patch.get(correspondance_new_index_patch.get(index_face_final)),correspondance[correspondance_new_index_patch.get(index_face_final)])
+                        (poids_b,fb) = recherche_face(b,patch.get(correspondance_new_index_patch.get(index_face_final)),correspondance[correspondance_new_index_patch.get(index_face_final)])
+                        (poids_c,fc) = recherche_face(c,patch.get(correspondance_new_index_patch.get(index_face_final)),correspondance[correspondance_new_index_patch.get(index_face_final)])
                         # on a donc les coordonnées dans le plan relatif à la face du base_mesh 
 
-                        print(fa,fb,fc)
                         #il faut donc mtn stocker ces valeurs dans le final_mesh
                         #on commence on crée les 3 nouveaux vertex dans le final_mesh
                         [idv1,idv2,idv3] = [indice_v+1,indice_v+2,indice_v+3]
-                        final_mesh.add_vertex(idv1,poids_a[0]*input_mesh.vertices[fa.a] + poids_a[1]*input_mesh.vertices[fa.b] + poids_a[2]*input_mesh.vertices[fa.c])
-                        final_mesh.add_vertex(idv2,poids_b[0]*input_mesh.vertices[fb.a] + poids_b[1]*input_mesh.vertices[fb.b] + poids_b[2]*input_mesh.vertices[fb.c])
-                        final_mesh.add_vertex(idv3,poids_c[0]*input_mesh.vertices[fc.a] + poids_c[1]*input_mesh.vertices[fc.b] + poids_c[2]*input_mesh.vertices[fc.c])
+                        if fa != -1 :
+                                final_mesh.add_vertex(idv1,poids_a[0]*input_mesh.vertices[fa.a] + poids_a[1]*input_mesh.vertices[fa.b] + poids_a[2]*input_mesh.vertices[fa.c])
+                        else :
+                                final_mesh.add_vertex(idv1,a)
+                        if fb != -1 :
+                                final_mesh.add_vertex(idv2,poids_b[0]*input_mesh.vertices[fb.a] + poids_b[1]*input_mesh.vertices[fb.b] + poids_b[2]*input_mesh.vertices[fb.c])
+                        else :
+                                final_mesh.add_vertex(idv2,b)
+        
+                        if fc != -1 :
+                                final_mesh.add_vertex(idv3,poids_c[0]*input_mesh.vertices[fc.a] + poids_c[1]*input_mesh.vertices[fc.b] + poids_c[2]*input_mesh.vertices[fc.c])
+                        else :
+                                final_mesh.add_vertex(idv2,c)
                         indice_v += 3
 
                         #on peut donc mtn créer les 4 nouvelles faces du final_mesh
                         [idf1,idf2,idf3,idf4] = [indice_f+1,indice_f+2,indice_f+3,indice_f+4]
-                        final_mesh.add_face(idf1,[s1,idv3,idv1])
-                        final_mesh.add_face(idf2,[idv3,s2,idv2])
-                        final_mesh.add_face(idf3,[idv3,idv2,idv1])
-                        final_mesh.add_face(idf4,[idv1,idv2,s3])
+                        final_mesh.add_face(idf1,obja.Face(i1,idv3,idv1))
+                        final_mesh.add_face(idf2,obja.Face(idv3,i2,idv2))
+                        final_mesh.add_face(idf3,obja.Face(idv3,idv2,idv1))
+                        final_mesh.add_face(idf4,obja.Face(idv1,idv2,i3))
                         indice_f+=4
 
                         #finalement on retire la face sur laquelle on vient de travailler
@@ -353,10 +366,10 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
                         inter_mesh.add_vertex(idv2,b)
                         inter_mesh.add_vertex(idv3,c)
 
-                        inter_mesh.add_face(idf1,[s1,idv3,idv1])
-                        inter_mesh.add_face(idf2,[idv3,s2,idv2])
-                        inter_mesh.add_face(idf3,[idv3,idv2,idv1])
-                        inter_mesh.add_face(idf4,[idv1,idv2,s3])
+                        inter_mesh.add_face(idf1,obja.Face(i1,idv3,idv1))
+                        inter_mesh.add_face(idf2,obja.Face(idv3,i2,idv2))
+                        inter_mesh.add_face(idf3,obja.Face(idv3,idv2,idv1))
+                        inter_mesh.add_face(idf4,obja.Face(idv1,idv2,i3))
 
                         to_del.append(index_face_final)
                         #del L[index_face_final]
@@ -367,10 +380,21 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
                         #L[idf3] = face_base
                         #L[idf4] = face_base
                         to_add.append([[idf1,face_base],[idf2,face_base],[idf3,face_base],[idf4,face_base]])
+
+                        i = correspondance_new_index_patch.get(index_face_final)
+                        del correspondance_new_index_patch[index_face_final]
+                        correspondance_new_index_patch[idf1] = i
+                        correspondance_new_index_patch[idf2] = i
+                        correspondance_new_index_patch[idf3] = i
+                        correspondance_new_index_patch[idf4] = i
+
+                        
                 for delete in to_del:
                         del L[delete]
-                for add in to_add:
+                for k in range(len(to_add)):
+                        add = to_add[k][0]
                         L[add[0]] = add[1]
+
         return final_mesh
 
 def main(args=None):
@@ -398,11 +422,13 @@ def main(args=None):
         # 4 - On projète les patchs sur le maillage de base
         
         correspondance = cc.projection(input_mesh, base_mesh, patch) # correspondance: dict(id vertex 3D, vertex2D)
-        print(len(correspondance))
+
         # 5 - On travaille la subdivision
         final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance,r) # final_mesh : Output
-        print(len(final_mesh.faces))
+        print(final_mesh.vertices)
         print(len(final_mesh.vertices))
+        print(final_mesh.faces)
+        
         with open('test_sphere.obj','w') as output :
                 for k in final_mesh.vertices.keys() :
                         v = final_mesh.vertices.get(k)
