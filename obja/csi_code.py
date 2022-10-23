@@ -130,7 +130,7 @@ def determine_patch(bord,model_origine,color,colors,faces_restantes) :
         for k in faces_restantes.keys() :
             f = faces_restantes.get(k)
             if f.isIn(vi) and f.isIn(viplus1) :
-                if f.orientation(vi,viplus1,'h') :
+                if f.orientation(vi,viplus1,'a') :
                     if f not in A :
                         A.append(f)
                         P.append(f)
@@ -173,15 +173,21 @@ def transform_patch(P) :
             P_transforme.append(f.c)
     return P_transforme 
 
-def partition(bords, model_origine) :
+def partition(bords, model_origine,model_base,r) :
     faces_restantes = convert_dict(model_origine.faces)
     colors = {}
     patch = {}
     p = 0
-    for i in range(0,len(bords) - 2,3) :
-        patch[p],colors = determine_patch(test_bord([bords[i],bords[i+1],bords[i+2]]),model_origine,[1.0, i* 0.05, i * 0.01],colors,faces_restantes)
+    for i in range(0,len(bords)-2,3) :
+##        print(i)
+##        #print(verif_bord(bords[i],bords[i+1],bords[i+2]))
+##        print([bords[i],bords[i+1],bords[i+2]])
+##        print(test_bord([bords[i],bords[i+1],bords[i+2]]))
+        #bord,model_base,model_origine,r = modification_patch([bords[i],bords[i+1],bords[i+2]],model_base,model_origine,r)
+##        print(bord)
+        patch[p],colors = determine_patch([bords[i],bords[i+1],bords[i+2]],model_origine,[1.0, i* 0.04, i * 0.04],colors,faces_restantes)
         p+=1
-    return patch, colors,faces_restantes
+    return patch, colors,faces_restantes,r
 
 def convert_dict(faces) :
     d = {}
@@ -206,23 +212,43 @@ def test_bord(bord) :
     return bord 
 
 def verif_bord(bord1,bord2,bord3) :
+    print(bord1,bord2,bord3)
     index13 = -1
     index12 = -1
     index23 = -1
     while bord1[1] == bord3[-2] :
-        bord1 = bord3[1:]
-        bord3 = bord1[:-1]
-        index13 = bord3[end]
+        bord1 = bord1[1:]
+        bord3 = bord3[:-1]
+        index13 = bord3[-1]
     while bord1[-2] == bord2[1] :
         bord1 = bord1[:-1]
         bord2 = bord2[1:]
-        index12 = bord1[end]
+        index12 = bord1[-1]
     while bord2[-2] == bord3[1] :
         bord2 = bord2[:-1]
         bord3 = bord3[1:]
-        index23 = bord2[end]
-        
+        index23 = bord2[-1]
     return index13,index12,index23,[bord1,bord2,bord3]
-def modification_patch(bord,model_base,model_origine) :
+
+def modification_patch(bord,model_base,model_origine,r) :
+    
+    r = list(r)
+    old_13 = bord[0][0]
+    old_12 = bord[1][0]
+    old_23 = bord[2][0]
     index13,index12,index23,bord = verif_bord(bord[0],bord[1],bord[2])
-        
+
+    if index13 != -1 :
+        model_base.vertices[r.index(old_13)] = model_origine.vertices[index13]
+        r[r.index(old_13)] = index13
+    if index12 != -1 :
+        model_base.vertices[r.index(old_12)] = model_origine.vertices[index12]
+        r[r.index(old_12)] = index12
+    if index23 != -1 :
+        print(r.index(old_23))
+        print(model_base.vertices[r.index(old_23)])
+        print(index23)
+        print(len(model_origine.vertices))
+        model_base.vertices[r.index(old_23)] = model_origine.vertices[index23]
+        r[r.index(old_23)] = index23
+    return bord,model_base,model_origine,np.array(r)

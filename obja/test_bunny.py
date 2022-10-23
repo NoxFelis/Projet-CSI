@@ -2,8 +2,8 @@ import csi_code as cc
 import obja
 import patch_limit as pl
 
-p,r, input_mesh = pl.get_limit("sphere_input.obj")
-base_mesh = obja.parse_file("sphere_base.obj")
+p,r, input_mesh = pl.get_limit("sphere4.obj")
+base_mesh = obja.parse_file("sphere5.obj")
 patch,colors,faces_restantes,r = cc.partition(p,input_mesh,base_mesh,r)
 ##correspondance = cc.projection(input_mesh,base_mesh,patch)
 ##
@@ -18,7 +18,7 @@ patch,colors,faces_restantes,r = cc.partition(p,input_mesh,base_mesh,r)
 ##        output.write(f'fc {k + 1} {c[0]} {c[1]} {c[2]}\n')
         
 
-with open('test_bunny_v3.obj','w') as output :
+with open('test_bunny_v4.obj','w') as output :
     for k in range(len(input_mesh.vertices)) :
         v = input_mesh.vertices[k]
         if  k in colors :

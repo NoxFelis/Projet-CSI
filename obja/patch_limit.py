@@ -587,7 +587,7 @@ def get_reel_indexes_base_mesh(input_path="./bunny_input.obj", base_path="./bunn
 
   return reel_indexes, base_faces, base_vertices
 
-def get_reel_indexes_base_mesh_new(model, base_path="./sphere_base.obj"):
+def get_reel_indexes_base_mesh_new(model, base_path="./sphere5.obj"):
   base_faces, base_vertices = read_obj(base_path)
   #faces, vertices = read_obj(input_path)
   reel_indexes = np.zeros(base_vertices.shape[0], dtype = int)
@@ -872,7 +872,7 @@ def get_limit(input_path):
   #faces, vertices = read_obj("./bunny_input.obj")
   model = obja.parse_file(input_path)
   #model = division_4(input_path)
-  reel_indexes, base_faces, base_vertices = get_reel_indexes_base_mesh_new(model, base_path="./sphere_base.obj")
+  reel_indexes, base_faces, base_vertices = get_reel_indexes_base_mesh_new(model, base_path="./sphere5.obj")
 
   graph, np_graph = create_graph(model)
 
