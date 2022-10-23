@@ -230,17 +230,18 @@ def bound_box(input_mesh):
 def subdivision(input_mesh, base_mesh,patch, correspondance,r):
         # initialisation : liste L avec toutes les faces du mesh
         # on commence déjà par créer le modèle sur lequel on va travailler, qui est une copie du base_mesh
-        final_mesh = obja.Output("sphere_test_sub.obja")
-        inter_mesh = obja.Output("sphere_inter.obja") #le inter_mesh représente le final mesh, mais strictement dans les repères relatifs du base_mesh
+        output = open("sphere_final_mesh.obja",'w') 
+        final_mesh = obja.Output(output)
+        inter = open("sphere_inter_mesh.obja",'w')
+        inter_mesh = obja.Output(inter) #le inter_mesh représente le final mesh, mais strictement dans les repères relatifs du base_mesh
 
         # on va aussi initialiser la liste sur laquelle on va travailler qui va avoir les indices correspondant aux faces
         # en fait ce sera un dictionnaire avec en clé l'indice de face du final_mesh, et en valeurs l'indice de la face du base_mesh auquel elle appartient
         L = dict();
         correspondance_new_index_patch = dict()
         # on va tout copier
-        for i in range(1): # pour chaque face du base mesh
+        for i in range(len(base_mesh.faces)): # pour chaque face du base mesh
                 face = base_mesh.faces[i]	# face : Face
-                print(face)
                 # on ajoute les sommets au final_mesh
                 # rappel : une face est l'association de 3 indices des sommets le formant
                 [ida,idb,idc] = [face.a,face.b,face.c]
@@ -288,7 +289,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
         min_val,max_val = bound_box(input_mesh)
         diag_bound = math.dist(min_val,max_val)
         Seuil = 1
-        kmax = 1
+        kmax = 10
         iter = 0
         
 # une fois l'initialisation faite nous pouvons procéder à la subdivision à proprement parler
@@ -425,9 +426,6 @@ def main(args=None):
 
         # 5 - On travaille la subdivision
         final_mesh = subdivision(input_mesh, base_mesh,patch, correspondance,r) # final_mesh : Output
-        print(final_mesh.vertices)
-        print(len(final_mesh.vertices))
-        print(final_mesh.faces)
         
         with open('test_sphere.obj','w') as output :
                 for k in final_mesh.vertices.keys() :
