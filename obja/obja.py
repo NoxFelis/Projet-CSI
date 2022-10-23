@@ -329,9 +329,10 @@ class Output:
         """
         Adds a new vertex to the model with the specified index.
         """
-        self.vertex_mapping[index] = len(self.vertex_mapping)
-        print('v {} {} {}'.format(vertex[0], vertex[1], vertex[2]), file=self.output)
-        self.vertices[index] = vertex
+        if self.vertex_mapping.get(index) == None :
+            self.vertex_mapping[index] = len(self.vertex_mapping)
+            print('v {} {} {}'.format(vertex[0], vertex[1], vertex[2]), file=self.output)
+            self.vertices[index] = np.copy(vertex)
 
 
     def edit_vertex(self, index, vertex):
@@ -343,30 +344,31 @@ class Output:
         else:
             print('ev {} {} {} {}'.format(self.vertex_mapping[index] + 1, vertex[0], vertex[1], vertex[2]),
                   file=self.output)
-        self.vertices[index] = vertex
+        self.vertices[index] = np.copy(vertex)
 
     def add_face(self, index, face):
         """
         Adds a face to the model.
         """
-        self.face_mapping[index] = len(self.face_mapping)
-        print('f {} {} {}'.format(
-            self.vertex_mapping[face.a] + 1,
-            self.vertex_mapping[face.b] + 1,
-            self.vertex_mapping[face.c] + 1
-        ),
-            file=self.output
-        )
-        self.faces[index] = face
-
-        if self.random_color:
-            print('fc {} {} {} {}'.format(
-                len(self.face_mapping),
-                random.uniform(0, 1),
-                random.uniform(0, 1),
-                random.uniform(0, 1)),
+        if self.face_mapping.get(index) == None:
+            self.face_mapping[index] = len(self.face_mapping)
+            print('f {} {} {}'.format(
+                self.vertex_mapping[face.a] + 1,
+                self.vertex_mapping[face.b] + 1,
+                self.vertex_mapping[face.c] + 1
+            ),
                 file=self.output
             )
+            self.faces[index] = face.clone()
+
+            if self.random_color:
+                print('fc {} {} {} {}'.format(
+                    len(self.face_mapping),
+                    random.uniform(0, 1),
+                    random.uniform(0, 1),
+                    random.uniform(0, 1)),
+                    file=self.output
+                )
 
     def edit_face(self, index, face):
         """

@@ -6,6 +6,7 @@ from os import getcwd
 import csi_code as cc
 import patch_limit as pl
 import matplotlib.pyplot as plt
+import logging as lg
 
 DATA_DIR = getcwd()
 
@@ -85,10 +86,12 @@ def recherche_face(sommet,patch_i,correspondance):
                         face = f
                         poids = r
                         break
-        print(face)
+        print('Face retournée: ' + str(face))
         return poids,face
+
 def det_v(u,v) :
     return u[0] * v[1] - u[1] * v[0]
+
 def plot_correspondance(correspondance,sommet,patch) :
         plt.plot(sommet[0],sommet[1],'ro')
         X = []
@@ -119,6 +122,7 @@ def plot_correspondance(correspondance,sommet,patch) :
                 Y = []
         plt.plot(X_pts,Y_pts,'bo')
         plt.show()
+
 # calcule la distance d'un point à un plan
 # point : np[int:3] : point
 # face : Face : la face qui nous permet de définir le plan
@@ -237,8 +241,8 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
 
         # on va aussi initialiser la liste sur laquelle on va travailler qui va avoir les indices correspondant aux faces
         # en fait ce sera un dictionnaire avec en clé l'indice de face du final_mesh, et en valeurs l'indice de la face du base_mesh auquel elle appartient
-        L = dict();
-        correspondance_new_index_patch = dict()
+        L = dict()
+        borders = dict()
         # on va tout copier
         for i in range(len(base_mesh.faces)): # pour chaque face du base mesh
                 face = base_mesh.faces[i]	# face : Face
@@ -280,7 +284,9 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
 
                 # on peut aussi ajouter les indices des faces directement dans la liste L
                 L[i] = i
-                correspondance_new_index_patch[i] = i
+                borders[frozenset((ida,idb))] = [False,-1] #le frozenset va permettre des egalités sans se soucier de l'ordre
+                borders[frozenset((idb,idc))] = [False,-1]
+                borders[frozenset((ida,idc))] = [False,-1] # on associe un chiffre qui sera l'index de l'autre élément à la frontière
 
 
         indice_f = len(L)
@@ -289,16 +295,17 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
         min_val,max_val = bound_box(input_mesh)
         diag_bound = math.dist(min_val,max_val)
         Seuil = 1
-        kmax = 10
+        kmax = 3
         iter = 0
         
-# une fois l'initialisation faite nous pouvons procéder à la subdivision à proprement parler
-# on va boucler sur les étapes suivantes tant qu'il reste une face à traiter
+        # une fois l'initialisation faite nous pouvons procéder à la subdivision à proprement parler
+        # on va boucler sur les étapes suivantes tant qu'il reste une face à traiter
         while len(L) > 0 and iter < kmax:
                 iter+=1
                 E = dict()
                 to_add = []
                 to_del = []
+                borders = dict.fromkeys(borders, [False,-1])
                 for index_face_final in L.keys():	# pour chaque face (du final_mesh) restante 
                         # on calcul l'erreur E(f)
                         #E[index_face_final] = erreur(index_face_final,L.get(index_face_final),patch,input_mesh,final_mesh,inter_mesh,correspondance[index_face_final]/diag_bound)
@@ -325,28 +332,127 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
                         #pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
                         #print(len(correspondance),index_face_final)
 
-                        (poids_a,fa) = recherche_face(a,patch.get(correspondance_new_index_patch.get(index_face_final)),correspondance[correspondance_new_index_patch.get(index_face_final)])
-                        (poids_b,fb) = recherche_face(b,patch.get(correspondance_new_index_patch.get(index_face_final)),correspondance[correspondance_new_index_patch.get(index_face_final)])
-                        (poids_c,fc) = recherche_face(c,patch.get(correspondance_new_index_patch.get(index_face_final)),correspondance[correspondance_new_index_patch.get(index_face_final)])
+                        (poids_a,fa) = recherche_face(a,patch.get(L.get(index_face_final)),correspondance[L.get(index_face_final)])
+                        (poids_b,fb) = recherche_face(b,patch.get(L.get(index_face_final)),correspondance[L.get(index_face_final)])
+                        (poids_c,fc) = recherche_face(c,patch.get(L.get(index_face_final)),correspondance[L.get(index_face_final)])
                         # on a donc les coordonnées dans le plan relatif à la face du base_mesh 
 
                         #il faut donc mtn stocker ces valeurs dans le final_mesh
                         #on commence on crée les 3 nouveaux vertex dans le final_mesh
-                        [idv1,idv2,idv3] = [indice_v+1,indice_v+2,indice_v+3]
+                        [idv1,idv2,idv3] = [indice_v+1,indice_v+2,indice_v+3] #nroamelemnt les valeurs cont changer
                         if fa != -1 :
-                                final_mesh.add_vertex(idv1,poids_a[0]*input_mesh.vertices[fa.a] + poids_a[1]*input_mesh.vertices[fa.b] + poids_a[2]*input_mesh.vertices[fa.c])
+                                point = poids_a[0]*input_mesh.vertices[fa.a] + poids_a[1]*input_mesh.vertices[fa.b] + poids_a[2]*input_mesh.vertices[fa.c]
+                                match borders.get(frozenset((i1,i3))):
+                                        case None:
+                                                indice_v +=1
+                                                final_mesh.add_vertex(indice_v,point)
+                                                idv1 = indice_v
+                                        case [True ,id] : 
+                                                idv1 = id
+                                                final_mesh.edit_vertex(idv1,0.5*final_mesh.vertices[idv1]+0.5*point)
+                                                del borders[frozenset((i1,i3))]
+                                        case [False ,id] :
+                                                indice_v +=1
+                                                final_mesh.add_vertex(indice_v,point)
+                                                borders[frozenset((i1,indice_v))] = [False,-1]
+                                                borders[frozenset((i3,indice_v))] = [False,-1]
+                                                borders[frozenset((i1,i3))] = [True,indice_v]
+                                                idv1 = indice_v
+                                                
                         else :
-                                final_mesh.add_vertex(idv1,a)
+                                point = 0.5*final_mesh.vertices[i3] + 0.5*final_mesh.vertices[i1]
+                                match borders.get(frozenset((i1,i3))):
+                                        case None:
+                                                indice_v +=1
+                                                idv1 = indice_v
+                                                final_mesh.add_vertex(indice_v,point)
+                                        case [True ,id] : 
+                                                idv1 = id
+                                                final_mesh.edit_vertex(idv1,0.5*final_mesh.vertices[idv1]+0.5*point)
+                                                del borders[frozenset((i1,i3))]
+                                        case [False ,id] :
+                                                indice_v +=1
+                                                idv1 = indice_v
+                                                final_mesh.add_vertex(indice_v,point)
+                                                borders[frozenset((i1,indice_v))] = [False,-1]
+                                                borders[frozenset((i3,indice_v))] = [False,-1]
+                                                borders[frozenset((i1,i3))] = [True,indice_v]
                         if fb != -1 :
-                                final_mesh.add_vertex(idv2,poids_b[0]*input_mesh.vertices[fb.a] + poids_b[1]*input_mesh.vertices[fb.b] + poids_b[2]*input_mesh.vertices[fb.c])
+                                point = poids_b[0]*input_mesh.vertices[fb.a] + poids_b[1]*input_mesh.vertices[fb.b] + poids_b[2]*input_mesh.vertices[fb.c]
+                                match borders.get(frozenset((i2,i3))):
+                                        case None:
+                                                indice_v +=1
+                                                idv2 = indice_v
+                                                final_mesh.add_vertex(indice_v,point)
+                                        case [True ,id]: 
+                                                idv2 = id
+                                                final_mesh.edit_vertex(idv2,0.5*final_mesh.vertices[idv2]+0.5*point)
+                                                del borders[frozenset((i2,i3))]
+                                        case [False,id] :
+                                                indice_v +=1
+                                                idv2 = indice_v
+                                                final_mesh.add_vertex(indice_v,point)
+                                                borders[frozenset((i2,indice_v))] = [False,-1]
+                                                borders[frozenset((i3,indice_v))] = [False,-1]
+                                                borders[frozenset((i2,i3))] = [True,indice_v]
+                                                
                         else :
-                                final_mesh.add_vertex(idv2,b)
+                                point = 0.5*final_mesh.vertices[i3] + 0.5*final_mesh.vertices[i2]
+                                match borders.get(frozenset((i2,i3))):
+                                        case None:
+                                                indice_v +=1
+                                                idv2 = indice_v
+                                                final_mesh.add_vertex(indice_v,point)
+                                        case [True ,id] : 
         
+                                                idv2 = id
+                                                final_mesh.edit_vertex(idv2,0.5*final_mesh.vertices[idv2]+0.5*point)
+                                                del borders[frozenset((i2,i3))]
+                                        case [False ,id] :
+                                                indice_v +=1
+                                                idv2 = indice_v
+                                                final_mesh.add_vertex(indice_v,point)
+                                                borders[frozenset((i2,indice_v))] = [False,-1]
+                                                borders[frozenset((i3,indice_v))] = [False,-1]
+                                                borders[frozenset((i2,i3))] = [True,indice_v]
                         if fc != -1 :
-                                final_mesh.add_vertex(idv3,poids_c[0]*input_mesh.vertices[fc.a] + poids_c[1]*input_mesh.vertices[fc.b] + poids_c[2]*input_mesh.vertices[fc.c])
+                                point = poids_c[0]*input_mesh.vertices[fc.a] + poids_c[1]*input_mesh.vertices[fc.b] + poids_c[2]*input_mesh.vertices[fc.c]
+                                match borders.get(frozenset((i1,i2))):
+                                        case None:
+                                                indice_v +=1
+                                                idv3 = indice_v
+                                                final_mesh.add_vertex(indice_v,point)
+                                        case [True ,id] : 
+                                                idv3 = id
+                                                final_mesh.edit_vertex(idv3,0.5*final_mesh.vertices[idv3]+0.5*point)
+                                                del borders[frozenset((i1,i2))]
+                                        case [False ,id] :
+                                                indice_v +=1
+                                                idv3 = indice_v
+                                                final_mesh.add_vertex(indice_v,point)
+                                                borders[frozenset((i1,indice_v))] = [False,-1]
+                                                borders[frozenset((i2,indice_v))] = [False,-1]
+                                                borders[frozenset((i1,i2))] = [True,indice_v]
+                                                
                         else :
-                                final_mesh.add_vertex(idv2,c)
-                        indice_v += 3
+                                point = 0.5*final_mesh.vertices[i2] + 0.5*final_mesh.vertices[i1]
+                                match borders.get(frozenset((i1,i2))):
+                                        case None:
+                                                indice_v +=1
+                                                idv3 = indice_v
+                                                final_mesh.add_vertex(indice_v,point)
+                                        case [True ,id] : 
+                                                idv3 = id
+                                                final_mesh.edit_vertex(idv3,0.5*final_mesh.vertices[idv3]+0.5*point)
+                                                del borders[frozenset((i1,i2))]
+                                        case [False ,id] :
+                                                indice_v +=1
+                                                idv3 = indice_v
+                                                final_mesh.add_vertex(indice_v,point)
+                                                borders[frozenset((i1,indice_v))] = [False,-1]
+                                                borders[frozenset((i2,indice_v))] = [False,-1]
+                                                borders[frozenset((i1,i2))] = [True,indice_v]
+                        
 
                         #on peut donc mtn créer les 4 nouvelles faces du final_mesh
                         [idf1,idf2,idf3,idf4] = [indice_f+1,indice_f+2,indice_f+3,indice_f+4]
@@ -380,22 +486,15 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
                         #L[idf2] = face_base
                         #L[idf3] = face_base
                         #L[idf4] = face_base
-                        to_add.append([[idf1,face_base],[idf2,face_base],[idf3,face_base],[idf4,face_base]])
+                        to_add.extend([[idf1,face_base],[idf2,face_base],[idf3,face_base],[idf4,face_base]])
 
-                        i = correspondance_new_index_patch.get(index_face_final)
-                        del correspondance_new_index_patch[index_face_final]
-                        correspondance_new_index_patch[idf1] = i
-                        correspondance_new_index_patch[idf2] = i
-                        correspondance_new_index_patch[idf3] = i
-                        correspondance_new_index_patch[idf4] = i
 
                         
                 for delete in to_del:
                         del L[delete]
                 for k in range(len(to_add)):
-                        add = to_add[k][0]
-                        L[add[0]] = add[1]
-
+                        L[to_add[k][0]] = to_add[k][1]
+                
         return final_mesh
 
 def main(args=None):
