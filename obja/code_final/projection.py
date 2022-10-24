@@ -69,10 +69,10 @@ def projection(model_origine,model_base,patch):
         f = faces_base[k]
 
         #calcul de la base de la face
-        x1,x2,n = calcul_base(vertices_base[f.a],vertices_base[f.b],vertices_base[f.c])
+        x1,x2,n = calcul_base(vertices_base[f.a][0:3],vertices_base[f.b][0:3],vertices_base[f.c][0:3])
 
         #calcul barycentre la face
-        barycentre_face = 1/3 * (vertices_base[f.a]+ vertices_base[f.b] + vertices_base[f.c])
+        barycentre_face = 1/3 * (vertices_base[f.a][0:3]+ vertices_base[f.b][0:3] + vertices_base[f.c][0:3])
         
         patch_courant = pt.transform_patch(patch.get(k))
         projection_points = dict()
