@@ -82,7 +82,7 @@ def projection(model_origine,model_base,patch):
         # appartenant au patch correspondant à une face du modèle de base
         for i in range(len(patch_courant)) :
             
-            P = vertices_origine[patch_courant[i]]
+            P = vertices_origine[patch_courant[i]][0:3]
 
             P_proj, coord_p_proj = projection_point(x1,x2,P)
             
