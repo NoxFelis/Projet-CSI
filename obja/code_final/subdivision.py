@@ -170,7 +170,7 @@ def bound_box(input_mesh):
 # correspondance : 	dict(int,[int,4]) : 	associe l'indice d'un sommet du input_mesh aux coordoonées RELATIVES (base: (s3:s1,s2))
 #									 		de sa projection dans la bonne face et la DISTANCE entre ces points
 # TODO FAIRE DES FACTORISATIONS DE CODE
-def subdivision(input_mesh, base_mesh,patch, correspondance,r):
+def subdivision(input_mesh, base_mesh,patch, correspondance,r,kmax):
         # initialisation : liste L avec toutes les faces du mesh
         # on commence déjà par créer le modèle sur lequel on va travailler, qui est une copie du base_mesh
         output = open("sphere_final_mesh.obja",'w') 
@@ -233,7 +233,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
         min_val,max_val = bound_box(input_mesh)
         diag_bound = math.dist(min_val,max_val)
         Seuil = 1
-        kmax = 1
+        
         iter = 0
         
         # une fois l'initialisation faite nous pouvons procéder à la subdivision à proprement parler

@@ -32,9 +32,10 @@ def main(args=None):
 
         # model de type obja.Model
 
-        bords, DEFAULT_NEW_INPUT, r = bc.main(DEFAULT_INPUT, DEFAULT_BASE, DEFAULT_NEW_INPUT)
+        bords, DEFAULT_NEW_INPUT_2, r = bc.main(DEFAULT_INPUT, DEFAULT_BASE, DEFAULT_NEW_INPUT)
+        bords, DEFAULT_NEW_INPUT_3, r = bc.main(DEFAULT_NEW_INPUT, DEFAULT_BASE, DEFAULT_NEW_INPUT_2)
         print(r)
-        input_mesh = obja.parse_file(DEFAULT_NEW_INPUT)
+        input_mesh = obja.parse_file(DEFAULT_NEW_INPUT_3)
         
         print("calculs de bords : done")
 
@@ -56,7 +57,7 @@ def main(args=None):
         print("projections : done")
 
         # 5 - On travaille la subdivision
-        final_mesh = sb.subdivision(input_mesh, base_mesh,patch, correspondance,r) # final_mesh : Output
+        final_mesh = sb.subdivision(input_mesh, base_mesh,patch, correspondance,r,1) # final_mesh : Output
         print("subdivisions : done")
 
         with open('test_sphere.obj','w') as output :
