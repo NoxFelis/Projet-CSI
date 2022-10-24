@@ -33,6 +33,7 @@ def main(args=None):
         # model de type obja.Model
 
         bords, DEFAULT_NEW_INPUT, r = bc.main(DEFAULT_INPUT, DEFAULT_BASE, DEFAULT_NEW_INPUT)
+        print(r)
         input_mesh = obja.parse_file(DEFAULT_NEW_INPUT)
         
         print("calculs de bords : done")
@@ -45,11 +46,13 @@ def main(args=None):
 
         # 3 - On partitionne le maillage d'origine
         # sur le maillage de base (patchs)
-        patch , faces_restantes,r = pt.partition(bords, input_mesh,base_mesh,r,'a') # patch : dict(face,list(faces))
+        patch , faces_restantes = pt.partition(bords, input_mesh,base_mesh,'a') # patch : dict(face,list(faces))
         print("partionnage : done")
 
         # 4 - On projète les patchs sur le maillage de base
-        correspondance, distances = pp.projection(input_mesh,base_mesh,patch) # correspondance: dict(id vertex 3D, vertex2D)   
+        correspondance, distances = pp.projection(input_mesh,base_mesh,patch) # correspondance: dict(id vertex 3D, vertex2D)
+        print(type(correspondance[0]))
+        print(type(r[0]))
         print("projections : done")
 
         # 5 - On travaille la subdivision

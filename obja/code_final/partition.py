@@ -112,14 +112,14 @@ def determine_patch(bord,model_origine,faces_restantes,orientation) :
 # retour : - patch : dict(int : list(faces)) (nb_patch, x)
 #          - faces_restantes : dictionnaires des faces qui n'ont été identifiée à aucun patch
 #          - r : indice des sommets du base mesh (éventuellement modifié)
-def partition(bords, model_origine,model_base,r,orientation) :
+def partition(bords, model_origine,model_base,orientation) :
     faces_restantes = convert_dict(model_origine.faces)
     patch = {}
     p = 0
     for i in range(0,len(bords)-2,3) :
         patch[p] = determine_patch([bords[i],bords[i+1],bords[i+2]],model_origine,faces_restantes,orientation)
         p+=1
-    return patch, faces_restantes,r
+    return patch, faces_restantes
 
 
 

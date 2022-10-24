@@ -198,20 +198,20 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
 
                 x1,x2,n = pp.calcul_base(base_mesh.vertices[ida][0:3],base_mesh.vertices[idb][0:3],base_mesh.vertices[idc][0:3] )
 
-                if r[ida] in correspondance[i] :        
-                        inter_mesh.add_vertex(ida,correspondance[i].get(r[ida]))
+                if r[i][1] in correspondance[i] :        
+                        inter_mesh.add_vertex(ida,correspondance[i].get(r[i][1]))
                 else :
                         p_projete, coord_p = pp.projection_point(x1,x2,base_mesh.vertices[ida][0:3])
                         inter_mesh.add_vertex(ida,p_projete)
 
-                if r[idb] in correspondance[i] :        
-                        inter_mesh.add_vertex(idb,correspondance[i].get(r[idb]))
+                if r[i][2] in correspondance[i] :        
+                        inter_mesh.add_vertex(idb,correspondance[i].get(r[i][2]))
                 else :
                         p_projete, coord_p = pp.projection_point(x1,x2,base_mesh.vertices[idb][0:3])
                         inter_mesh.add_vertex(idb,p_projete)
                         
-                if r[idc] in correspondance[i] :        
-                        inter_mesh.add_vertex(idc,correspondance[i].get(r[idc]))
+                if r[i][3] in correspondance[i] :        
+                        inter_mesh.add_vertex(idc,correspondance[i].get(r[i][3]))
                 else :
                         p_projete, coord_p = pp.projection_point(x1,x2,base_mesh.vertices[idc][0:3])
                         inter_mesh.add_vertex(idc,p_projete)
