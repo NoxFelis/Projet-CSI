@@ -55,7 +55,8 @@ def test_bord(bord) :
         bord[1] = bord[1][1:]
     if bord[1][-2] == bord[2][1] :
         bord[1] = bord[1][:-1]
-        bord[2] = bord[2][1:] 
+        bord[2] = bord[2][1:]
+    return bord
 
 # def determine_patch
 # determine les faces de l'input mesh qui appartiennent au patch

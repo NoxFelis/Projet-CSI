@@ -1,4 +1,5 @@
 import math
+from re import A
 import obja
 import numpy as np
 import os
@@ -20,12 +21,12 @@ DEFAULT_NEW_INPUT = "../sphere_new_input.obj"
 
 def main(args=None):
 
-        DEFAULT_INPUT = "../sphere4.obj"
-        DEFAULT_BASE = "../sphere5.obj"
-        DEFAULT_NEW_INPUT = "../sphere_new_input.obj"
+        
         # 1 - On récupère l'objet dans son maillage irrégulier 
         if args is None:
-                path = DATA_DIR + "/example/suzanne.obj"
+                DEFAULT_INPUT = DATA_DIR +"/" + "../sphere4.obj"
+                DEFAULT_BASE = DATA_DIR + "/" + "../sphere5.obj"
+                DEFAULT_NEW_INPUT = DATA_DIR + "/" + "../sphere_new_input.obj"
         else :
                 path = DATA_DIR + "/" + args
 
@@ -33,7 +34,8 @@ def main(args=None):
 
         bords, DEFAULT_NEW_INPUT, r = bc.main(DEFAULT_INPUT, DEFAULT_BASE, DEFAULT_NEW_INPUT)
         input_mesh = obja.parse_file(DEFAULT_NEW_INPUT)
-       
+        
+        print("calculs de bords : done")
 
         # 2 - On crée le maillage de base 
         # pour l'instant cette étape n'est pas gérée, on doit le faire à la main
@@ -43,14 +45,17 @@ def main(args=None):
 
         # 3 - On partitionne le maillage d'origine
         # sur le maillage de base (patchs)
-        patch , faces_restantes,r = pt.partition(bords, input_mesh,base_mesh,r,'h') # patch : dict(face,list(faces))
+        patch , faces_restantes,r = pt.partition(bords, input_mesh,base_mesh,r,str('h')) # patch : dict(face,list(faces))
+        print("partionnage : done")
 
         # 4 - On projète les patchs sur le maillage de base
-        correspondance, distances = pp.projection(input_mesh,base_mesh,patch) # correspondance: dict(id vertex 3D, vertex2D)
+        correspondance, distances = pp.projection(input_mesh,base_mesh,patch) # correspondance: dict(id vertex 3D, vertex2D)   
+        print("projections : done")
 
         # 5 - On travaille la subdivision
         final_mesh = sb.subdivision(input_mesh, base_mesh,patch, correspondance,r) # final_mesh : Output
-        
+        print("subdivisions : done")
+
         with open('test_sphere.obj','w') as output :
                 for k in final_mesh.vertices.keys() :
                         v = final_mesh.vertices.get(k)

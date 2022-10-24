@@ -33,6 +33,10 @@ class Face:
     def to_list(self) :
         return [self.a,self.b,self.c]
 
+    def isIn(self,v) :
+        f = self.to_list()
+        return v in f
+
     def isVertex(self,v) :
         f = self.to_list()
         return v in f
