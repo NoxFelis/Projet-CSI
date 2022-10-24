@@ -80,16 +80,16 @@ def projection(model_origine,model_base,patch):
         
         # parcous de sommets du modèle d'origine
         # appartenant au patch correspondant à une face du modèle de base
-        """ for i in range(len(patch_courant)) :
+        for i in range(len(patch_courant)) :
             
             P = vertices_origine[patch_courant[i]]
 
             P_proj, coord_p_proj = projection_point(x1,x2,P)
             
-            dist_proj = np.linalg.norm(P - (coord_p_proj + barrycentre_face))
+            dist_proj = np.linalg.norm(P - (coord_p_proj + barycentre_face))
 
             projection_points[patch_courant[i]] = P_proj
-            distance_proj[patch_courant[i]] = dist_proj """
+            distance_proj[patch_courant[i]] = dist_proj
         
         vertices_origine_base.append(projection_points)
         distance.append(distance_proj)

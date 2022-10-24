@@ -45,7 +45,7 @@ def main(args=None):
 
         # 3 - On partitionne le maillage d'origine
         # sur le maillage de base (patchs)
-        patch , faces_restantes,r = pt.partition(bords, input_mesh,base_mesh,r,str('h')) # patch : dict(face,list(faces))
+        patch , faces_restantes,r = pt.partition(bords, input_mesh,base_mesh,r,'a') # patch : dict(face,list(faces))
         print("partionnage : done")
 
         # 4 - On projète les patchs sur le maillage de base

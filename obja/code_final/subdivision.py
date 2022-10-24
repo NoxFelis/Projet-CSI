@@ -196,7 +196,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
 
                 # il faut récupérer les coordonnées des points dans l'input mesh projeté pour le patch correspondant
 
-                x1,x2 = pp.calcul_base(base_mesh.vertices[ida][0:3],base_mesh.vertices[idb][0:3],base_mesh.vertices[idc][0:3] )
+                x1,x2,n = pp.calcul_base(base_mesh.vertices[ida][0:3],base_mesh.vertices[idb][0:3],base_mesh.vertices[idc][0:3] )
 
                 if r[ida] in correspondance[i] :        
                         inter_mesh.add_vertex(ida,correspondance[i].get(r[ida]))

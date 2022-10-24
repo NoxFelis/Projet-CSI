@@ -117,7 +117,7 @@ def partition(bords, model_origine,model_base,r,orientation) :
     patch = {}
     p = 0
     for i in range(0,len(bords)-2,3) :
-        patch[p] = determine_patch(test_bord([bords[i],bords[i+1],bords[i+2]]),model_origine,faces_restantes,orientation)
+        patch[p] = determine_patch([bords[i],bords[i+1],bords[i+2]],model_origine,faces_restantes,orientation)
         p+=1
     return patch, faces_restantes,r
 
