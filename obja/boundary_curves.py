@@ -456,7 +456,7 @@ def get_base_edges(reel_indexes):
 ##          
 ##  return np_graph, S_P, reel_indexes, edges, base_faces, vertices.shape[0], faces, vertices, all_vertices, edges_dic, edges_f
 
-def get_all_limits(edges_f, S_P):
+def get_all_limits(reel_indexes, edges_f, S_P):
   """"Get the shortest path in the input mesh for each face of the base mesh
         edges_f : array of edge indexes nb_f * 3
         S_P : list of lists of shortest path for each edge
@@ -465,10 +465,44 @@ def get_all_limits(edges_f, S_P):
 
   S_P_F = []
 
-  for f1 in range(edges_f.shape[0]):
-    for f2 in range(edges_f.shape[1]):
-      #print(edges_f[f1, f2])
-      S_P_F.append(S_P[int(edges_f[f1, f2])])
+
+
+  for f in range(edges_f.shape[0]):
+
+    v1_r = reel_indexes[f, 1]
+    v2_r = reel_indexes[f, 2]
+    v3_r = reel_indexes[f, 3]
+
+    
+    p1 = S_P[int(edges_f[f, 0])].copy()
+
+    if v1_r -1 != p1[0]:
+      
+      p1.reverse()
+   
+
+      
+    S_P_F.append(p1)
+    
+    ##print(v1_r, p1[0], p1[-1])
+
+    p2 = S_P[int(edges_f[f, 1])].copy()
+ 
+    if v2_r -1 != p2[0]:
+      p2.reverse()
+
+    S_P_F.append(p2)
+    #print(v2_r, p2[0], p2[-1])
+
+
+    p3 = S_P[int(edges_f[f, 2])].copy()
+
+    if v3_r -1 != p3[0]:
+      p3.reverse()
+
+   
+    S_P_F.append(p3)
+    #print(v3_r, p3[0], p3[-1])
       
     
   return S_P_F
@@ -759,7 +793,7 @@ def get_new_mesh(S_P, edges, nb_vertices, faces, vertices):
     
 
 
-def main(input_mesh_path=DEFAULT_INPUT, base_mesh_path=DEFAULT_BASE, new_input_mesh_path=DEFAULT_NEW_INPUT2):
+def main(input_mesh_path=DEFAULT_INPUT, base_mesh_path=DEFAULT_BASE, new_input_mesh_path=DEFAULT_NEW_INPUT):
   """"Get the shortest path in the input mesh for each edge of the base mesh"""
 
   # get the data of the input and the base mesh
@@ -797,7 +831,7 @@ def main(input_mesh_path=DEFAULT_INPUT, base_mesh_path=DEFAULT_BASE, new_input_m
   write_obj(all_new_faces, all_new_vertices, new_input_mesh_path)
   
   # get the patch limits per faces of the base mesh
-  S_P_all = get_all_limits(edges_f, S_P)
+  S_P_all = get_all_limits(reel_indexes, edges_f, S_P)
 
   return S_P_all, new_input_mesh_path, reel_indexes
 
