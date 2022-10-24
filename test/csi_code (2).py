@@ -230,6 +230,7 @@ def verif_bord(bord1,bord2,bord3) :
         bord3 = bord3[1:]
         index23 = bord2[-1]
     return index13,index12,index23,[bord1,bord2,bord3]
+
 def modification_patch(bord,model_base,model_origine,r) :
     r = list(r)
     old_13 = bord[0][0]

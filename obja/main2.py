@@ -70,7 +70,7 @@ def recherche_face(sommet,patch_i,correspondance):
         poids = [None,None,None]
         face = -1
         epsilon = - math.pow(10,-2)
-        plot_correspondance(correspondance, sommet,patch_i,[0,0])
+        #plot_correspondance(correspondance, sommet,patch_i,[0,0])
         for k in range(len(patch_i)): # pour chaque face du input
                 #on a la face avec les points projetés
                 f = patch_i[k]
@@ -282,17 +282,18 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
                 else :
                         p_projete, coord_p = cc.projection_point(x1,x2,base_mesh.vertices[ida][0:3])
                         inter_mesh.add_vertex(ida,p_projete)
-
+                        print(p_projete)
                 if r[idb] in correspondance[i] :        
                         inter_mesh.add_vertex(idb,correspondance[i].get(r[idb]))
                 else :
                         p_projete, coord_p = cc.projection_point(x1,x2,base_mesh.vertices[idb][0:3])
                         inter_mesh.add_vertex(idb,p_projete)
-                        
+                        print(p_projete)                        
                 if r[idc] in correspondance[i] :        
                         inter_mesh.add_vertex(idc,correspondance[i].get(r[idc]))
                 else :
                         p_projete, coord_p = cc.projection_point(x1,x2,base_mesh.vertices[idc][0:3])
+                        print(p_projete)     
                         inter_mesh.add_vertex(idc,p_projete)
 
                 #maintenant on peut ajouter la face dans final_mesh
@@ -350,7 +351,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r):
                                 a = 0.5*s3 + 0.5*s1	#barycentre s3 s1
                                 b = 0.5*s3 + 0.5*s2	#barycentre s3 s2
                                 c = 0.5*s1 + 0.5*s2	# barycentre s1 s2
-
+                                print(a,b,c)
                                 #pour chacune de ces nouveaux sommets on cherche à quel face de l'input_mesh ils appartiennent
                                 #print(len(correspondance),index_face_final)
 

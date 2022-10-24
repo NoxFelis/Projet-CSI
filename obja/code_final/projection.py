@@ -61,7 +61,7 @@ def projection(model_origine,model_base,patch):
     vertices_origine = model_origine.vertices
 
     vertices_origine_base = []
-    coordonnees = []
+    distance = []
     
     # Parcours de face du maillage de base 
     for k in range(len(faces_base)) :
@@ -69,10 +69,14 @@ def projection(model_origine,model_base,patch):
         f = faces_base[k]
 
         #calcul de la base de la face
-        x1,x2 = calcul_base(vertices_base[f.a],vertices_base[f.b],vertices_base[f.c])
+        x1,x2,n = calcul_base(vertices_base[f.a],vertices_base[f.b],vertices_base[f.c])
+
+        #calcul barycentre la face
+        barycentre_face = 1/3 * (vertices_base[f.a]+ vertices_base[f.b] + vertices_base[f.c])
         
         patch_courant = pt.transform_patch(patch.get(k))
         projection_points = dict()
+        distance_proj = dict()
         
         # parcous de sommets du modèle d'origine
         # appartenant au patch correspondant à une face du modèle de base
@@ -82,13 +86,15 @@ def projection(model_origine,model_base,patch):
 
             P_proj, coord_p_proj = projection_point(x1,x2,P)
             
-            dist_proj = np.linalg.norm(P - coord_p_proj)
+            dist_proj = np.linalg.norm(P - (coord_p_proj + barrycentre_face))
 
             projection_points[patch_courant[i]] = P_proj
+            distance_proj[patch_courant[i]] = dist_proj
         
         vertices_origine_base.append(projection_points)
+        distance.append(distance_proj)
 
-    return vertices_origine_base
+    return vertices_origine_base, distance
 
 '''
 PARTIE COORDONNEES BARYCENTRIQUE : permet le calcul des coordonnees barycentriques
