@@ -16,8 +16,8 @@ entre l'input mesh et le base mesh
 # retour : x1,x2,n = vecteur de la base orthonormée
 def calcul_base(a1,a2,a3) :
     # Création de la base de la face sur laquelle on projette
-    x1 = a2[0:3] - a1[0:3]
-    x2 = a3[0:3] - a1[0:3]
+    x1 = a1[0:3] - a3[0:3]
+    x2 = a2[0:3] - a3[0:3]
 
     
     x1 = (1/np.linalg.norm(x1)) * x1

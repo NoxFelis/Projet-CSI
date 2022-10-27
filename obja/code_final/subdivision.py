@@ -199,22 +199,22 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r,kmax):
                 x1,x2,n = pp.calcul_base(base_mesh.vertices[ida][0:3],base_mesh.vertices[idb][0:3],base_mesh.vertices[idc][0:3] )
 
                 if r[i][1] in correspondance[i] :        
-                        inter_mesh.add_vertex(ida,correspondance[i].get(r[i][1]))
+                        inter_mesh.add_vertex(ida,correspondance[i].get(r[i][1]),i)
                 else :
                         p_projete, coord_p = pp.projection_point(x1,x2,base_mesh.vertices[ida][0:3])
-                        inter_mesh.add_vertex(ida,p_projete)
+                        inter_mesh.add_vertex(ida,p_projete,i)
 
                 if r[i][2] in correspondance[i] :        
-                        inter_mesh.add_vertex(idb,correspondance[i].get(r[i][2]))
+                        inter_mesh.add_vertex(idb,correspondance[i].get(r[i][2]),i)
                 else :
                         p_projete, coord_p = pp.projection_point(x1,x2,base_mesh.vertices[idb][0:3])
-                        inter_mesh.add_vertex(idb,p_projete)
+                        inter_mesh.add_vertex(idb,p_projete,i)
                         
                 if r[i][3] in correspondance[i] :        
-                        inter_mesh.add_vertex(idc,correspondance[i].get(r[i][3]))
+                        inter_mesh.add_vertex(idc,correspondance[i].get(r[i][3]),i)
                 else :
                         p_projete, coord_p = pp.projection_point(x1,x2,base_mesh.vertices[idc][0:3])
-                        inter_mesh.add_vertex(idc,p_projete)
+                        inter_mesh.add_vertex(idc,p_projete,i)
 
                 #maintenant on peut ajouter la face dans final_mesh
                 final_mesh.add_face(i,obja.Face(ida,idb,idc))	# vu que normalement c'est les mêmes indices
@@ -259,9 +259,9 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r,kmax):
                                 # rappel; base(s3:s1,s2)
                         f = inter_mesh.faces.get(index_face_final)
                         [i1,i2,i3] = [f.a,f.b,f.c]
-                        s1 = inter_mesh.vertices.get(i1)
-                        s2 = inter_mesh.vertices.get(i2)
-                        s3 = inter_mesh.vertices.get(i3)
+                        s1 = inter_mesh.vertices.get((i1,L[index_face_final]))
+                        s2 = inter_mesh.vertices.get((i2,L[index_face_final]))
+                        s3 = inter_mesh.vertices.get((i3,L[index_face_final]))
 
                         a = 0.5*s3 + 0.5*s1	#barycentre s3 s1
                         b = 0.5*s3 + 0.5*s2	#barycentre s3 s2
@@ -287,7 +287,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r,kmax):
                                                 idv1 = indice_v
                                         case [True ,id] : 
                                                 idv1 = id
-                                                final_mesh.edit_vertex(idv1,0.5*final_mesh.vertices[idv1]+0.5*point)
+                                                final_mesh.edit_vertex(idv1,0.5*final_mesh.vertices[(idv1,None)]+0.5*point)
                                                 del borders[frozenset((i1,i3))]
                                         case [False ,id] :
                                                 indice_v +=1
@@ -307,7 +307,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r,kmax):
                                                 final_mesh.add_vertex(indice_v,point)
                                         case [True ,id] : 
                                                 idv1 = id
-                                                final_mesh.edit_vertex(idv1,0.5*final_mesh.vertices[idv1]+0.5*point)
+                                                final_mesh.edit_vertex(idv1,0.5*final_mesh.vertices[(idv1,None)]+0.5*point)
                                                 del borders[frozenset((i1,i3))]
                                         case [False ,id] :
                                                 indice_v +=1
@@ -325,7 +325,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r,kmax):
                                                 final_mesh.add_vertex(indice_v,point)
                                         case [True ,id]: 
                                                 idv2 = id
-                                                final_mesh.edit_vertex(idv2,0.5*final_mesh.vertices[idv2]+0.5*point)
+                                                final_mesh.edit_vertex(idv2,0.5*final_mesh.vertices[(idv2,None)]+0.5*point)
                                                 del borders[frozenset((i2,i3))]
                                         case [False,id] :
                                                 indice_v +=1
@@ -346,7 +346,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r,kmax):
                                         case [True ,id] : 
         
                                                 idv2 = id
-                                                final_mesh.edit_vertex(idv2,0.5*final_mesh.vertices[idv2]+0.5*point)
+                                                final_mesh.edit_vertex(idv2,0.5*final_mesh.vertices[(idv2,None)]+0.5*point)
                                                 del borders[frozenset((i2,i3))]
                                         case [False ,id] :
                                                 indice_v +=1
@@ -364,7 +364,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r,kmax):
                                                 final_mesh.add_vertex(indice_v,point)
                                         case [True ,id] : 
                                                 idv3 = id
-                                                final_mesh.edit_vertex(idv3,0.5*final_mesh.vertices[idv3]+0.5*point)
+                                                final_mesh.edit_vertex(idv3,0.5*final_mesh.vertices[(idv3,None)]+0.5*point)
                                                 del borders[frozenset((i1,i2))]
                                         case [False ,id] :
                                                 indice_v +=1
@@ -384,7 +384,7 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r,kmax):
                                                 final_mesh.add_vertex(indice_v,point)
                                         case [True ,id] : 
                                                 idv3 = id
-                                                final_mesh.edit_vertex(idv3,0.5*final_mesh.vertices[idv3]+0.5*point)
+                                                final_mesh.edit_vertex(idv3,0.5*final_mesh.vertices[(idv3,None)]+0.5*point)
                                                 del borders[frozenset((i1,i2))]
                                         case [False ,id] :
                                                 indice_v +=1
@@ -410,9 +410,9 @@ def subdivision(input_mesh, base_mesh,patch, correspondance,r,kmax):
 
                         #avec les mêmes indices on va le faire pour le intermesh
                         inter_mesh.delete_face(index_face_final)
-                        inter_mesh.add_vertex(idv1,a)
-                        inter_mesh.add_vertex(idv2,b)
-                        inter_mesh.add_vertex(idv3,c)
+                        inter_mesh.add_vertex(idv1,a,L[index_face_final])
+                        inter_mesh.add_vertex(idv2,b,L[index_face_final])
+                        inter_mesh.add_vertex(idv3,c,L[index_face_final])
 
                         inter_mesh.add_face(idf1,obja.Face(i1,idv3,idv1))
                         inter_mesh.add_face(idf2,obja.Face(idv3,i2,idv2))
