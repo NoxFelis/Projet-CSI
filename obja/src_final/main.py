@@ -14,9 +14,9 @@ import projection as pp
 
 DATA_DIR = getcwd()
 
-DEFAULT_INPUT = "../sphere4.obj"
-DEFAULT_BASE = "../sphere5.obj"
-DEFAULT_NEW_INPUT = "../sphere_new_input.obj"
+DEFAULT_INPUT = "../images/sphere4.obj"
+DEFAULT_BASE = "../images/sphere5.obj"
+DEFAULT_NEW_INPUT = "../images/sphere_new_input.obj"
 
 
 def main(args=None):
